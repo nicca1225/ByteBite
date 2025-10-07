@@ -4,7 +4,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <!-- Logo -->
-          <router-link to="/" class="flex items-center space-x-3 group">
+          <router-link :to="isAuthenticated ? '/home' : '/'" class="flex items-center space-x-3 group">
             <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
               <span class="text-xl">🍽️</span>
             </div>
@@ -15,16 +15,26 @@
           
           <!-- Navigation Links -->
           <div class="hidden md:flex items-center space-x-8">
-            <router-link 
-              to="/" 
+            <router-link
+              v-if="!isAuthenticated"
+              to="/"
               class="text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300 relative group"
               active-class="text-emerald-600"
             >
               Home
               <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-emerald-600 transition-all duration-300 group-hover:w-full"></span>
             </router-link>
-            <router-link 
-              to="/about" 
+            <router-link
+              v-if="isAuthenticated"
+              to="/home"
+              class="text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300 relative group"
+              active-class="text-emerald-600"
+            >
+              Home
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-emerald-600 transition-all duration-300 group-hover:w-full"></span>
+            </router-link>
+            <router-link
+              to="/about"
               class="text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300 relative group"
               active-class="text-emerald-600"
             >
@@ -89,7 +99,8 @@
         <!-- Mobile Menu -->
         <div v-if="showMobileMenu" class="md:hidden py-4 border-t border-gray-200">
           <div class="space-y-4">
-            <router-link to="/" class="block text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300">Home</router-link>
+            <router-link v-if="!isAuthenticated" to="/" class="block text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300">Home</router-link>
+            <router-link v-if="isAuthenticated" to="/home" class="block text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300">Home</router-link>
             <router-link to="/about" class="block text-gray-700 hover:text-emerald-600 font-semibold transition-colors duration-300">About</router-link>
             
             <div v-if="!isAuthenticated" class="space-y-4 pt-4 border-t border-gray-200">
@@ -131,22 +142,26 @@
 
 <script>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { showToast } from '@/utils/toast'
 
 export default {
   name: 'App',
   setup() {
+    const router = useRouter()
     const authStore = useAuthStore()
-    
+
     const isAuthenticated = computed(() => authStore.isAuthenticated)
     const userName = computed(() => authStore.userName)
     const showMobileMenu = ref(false)
-    
+
     const handleLogout = async () => {
       await authStore.logout()
       showMobileMenu.value = false
-      // Redirect to home after logout
-      window.location.href = '/'
+      showToast('Logged out successfully', 'success')
+      // Redirect to landing page after logout
+      router.push('/')
     }
     
     const toggleMobileMenu = () => {

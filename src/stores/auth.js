@@ -62,17 +62,20 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(name, email, password) {
     isLoading.value = true
-    
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      
-      // Update the user's display name
-      await updateProfile(userCredential.user, {
+
+      // Update user state immediately
+      user.value = userCredential.user
+
+      // Update the user's display name (don't wait)
+      updateProfile(userCredential.user, {
         displayName: name
-      })
-      
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
+      }).catch(err => console.error('Profile update error:', err))
+
+      // Create user document in Firestore (don't wait - do in background)
+      setDoc(doc(db, 'users', userCredential.user.uid), {
         name: name,
         email: email,
         createdAt: new Date(),
@@ -82,13 +85,16 @@ export const useAuthStore = defineStore('auth', () => {
           budget: 0,
           fitnessGoals: ''
         }
-      })
-      
-      user.value = userCredential.user
+      }).catch(err => console.error('Firestore error:', err))
+
+      // Sign out immediately after registration so user can login fresh
+      await signOut(auth)
+      user.value = null
+
       return userCredential
     } catch (error) {
       let errorMessage = 'Registration failed. Please try again.'
-      
+
       switch (error.code) {
         case 'auth/email-already-in-use':
           errorMessage = 'An account with this email already exists.'
@@ -105,7 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
         default:
           errorMessage = error.message || errorMessage
       }
-      
+
       throw new Error(errorMessage)
     } finally {
       isLoading.value = false
@@ -133,32 +139,35 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loginWithGoogle() {
     isLoading.value = true
-    
+
     try {
       const provider = new GoogleAuthProvider()
       const userCredential = await signInWithPopup(auth, provider)
-      
-      // Check if user document exists, if not create one
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid))
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          name: userCredential.user.displayName,
-          email: userCredential.user.email,
-          createdAt: new Date(),
-          preferences: {
-            dietaryRestrictions: [],
-            allergies: [],
-            budget: 0,
-            fitnessGoals: ''
-          }
-        })
-      }
-      
+
+      // Update user state immediately
       user.value = userCredential.user
+
+      // Check if user document exists and create if needed (do in background)
+      getDoc(doc(db, 'users', userCredential.user.uid)).then(userDoc => {
+        if (!userDoc.exists()) {
+          setDoc(doc(db, 'users', userCredential.user.uid), {
+            name: userCredential.user.displayName,
+            email: userCredential.user.email,
+            createdAt: new Date(),
+            preferences: {
+              dietaryRestrictions: [],
+              allergies: [],
+              budget: 0,
+              fitnessGoals: ''
+            }
+          }).catch(err => console.error('Firestore error:', err))
+        }
+      }).catch(err => console.error('Firestore check error:', err))
+
       return userCredential
     } catch (error) {
       let errorMessage = 'Google sign-in failed. Please try again.'
-      
+
       switch (error.code) {
         case 'auth/popup-closed-by-user':
           errorMessage = 'Sign-in was cancelled.'
@@ -172,7 +181,7 @@ export const useAuthStore = defineStore('auth', () => {
         default:
           errorMessage = error.message || errorMessage
       }
-      
+
       throw new Error(errorMessage)
     } finally {
       isLoading.value = false

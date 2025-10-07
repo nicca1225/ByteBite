@@ -1,17 +1,18 @@
-# ByteBite
+# ByteBite 🍽️
 
-A modern, responsive Vue.js 3 application built with Vite, featuring a clean architecture and excellent developer experience.
+Smart Meal Planning for Students - A modern Vue.js web application with Firebase authentication and comprehensive form validation.
 
-## 🚀 Features
+## ✨ Features
 
+- 🔐 **Firebase Authentication** - Email/password and Google Sign-In
+- 🎨 **Beautiful UI** - Modern, responsive design with Tailwind CSS
+- 🛡️ **Secure Routing** - Protected routes with auto-redirects
+- 🔔 **Toast Notifications** - Real-time success/error messages
+- ✅ **Form Validation** - Comprehensive validation with visual feedback
+- 💪 **Password Strength** - Real-time password strength indicator
+- 📱 **Mobile Responsive** - Works perfectly on all devices
 - ⚡ **Vue.js 3** with Composition API
 - 🔥 **Vite** for lightning-fast development
-- 🎨 **Tailwind CSS** for modern, utility-first styling
-- 📱 **Mobile-first** responsive design
-- 🛣️ **Vue Router** for navigation
-- 🗃️ **Pinia** for state management
-- 🎯 **ESLint & Prettier** for code quality
-- 📦 **Component-based** architecture
 
 ## 📋 Prerequisites
 
@@ -47,17 +48,33 @@ This will install all dependencies including:
 - Vue Router
 - Pinia
 
-### 3. Environment Configuration (Optional)
-Create a `.env` file in the root directory for environment variables:
+### 3. Firebase Setup
+Set up Firebase for authentication:
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project or use an existing one
+3. Enable Authentication:
+   - Email/Password provider
+   - Google Sign-In provider
+4. Enable Firestore Database
+5. Copy your Firebase configuration
+
+### 4. Environment Configuration
+Create a `.env` file in the root directory:
 ```bash
 # Copy the example file
 cp .env.example .env
+```
 
-# Edit the .env file with your configuration
-VITE_APP_TITLE=ByteBite
-VITE_APP_DESCRIPTION=A modern Vue.js application
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_DEBUG=true
+Edit `.env` with your Firebase credentials:
+```
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
 
 ## 🚀 Running the Application
