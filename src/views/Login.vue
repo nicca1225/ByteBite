@@ -132,10 +132,13 @@
             :disabled="isLoading"
             class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-lg font-bold rounded-2xl text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
-            <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-3">
-              <div class="spinner"></div>
+            <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-6">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
             </span>
-            <span v-else class="absolute left-0 inset-y-0 flex items-center pl-3">
+            <span v-else class="absolute left-0 inset-y-0 flex items-center pl-6">
               <svg class="h-5 w-5 text-emerald-200 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
               </svg>
@@ -162,14 +165,16 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { showToast } from '@/utils/toast'
 
 export default {
   name: 'Login',
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const authStore = useAuthStore()
 
     const form = ref({
@@ -231,9 +236,11 @@ export default {
 
       try {
         await authStore.login(form.value.email.trim(), form.value.password)
-        router.push('/dashboard')
+        showToast('Welcome back! Login successful', 'success')
+        router.push('/home')
       } catch (err) {
         error.value = err.message || 'Login failed. Please try again.'
+        showToast(err.message || 'Login failed. Please try again.', 'error')
       } finally {
         isLoading.value = false
       }
@@ -245,13 +252,26 @@ export default {
 
       try {
         await authStore.loginWithGoogle()
-        router.push('/dashboard')
+        showToast('Welcome! Login successful', 'success')
+        router.push('/home')
       } catch (err) {
         error.value = err.message || 'Google sign-in failed. Please try again.'
+        showToast(err.message || 'Google sign-in failed. Please try again.', 'error')
       } finally {
         isLoading.value = false
       }
     }
+
+    onMounted(() => {
+      // Check for registration success
+      if (route.query.registered === 'true') {
+        showToast('Account created successfully! Please sign in.', 'success')
+        // Pre-fill email if provided
+        if (route.query.email) {
+          form.value.email = route.query.email
+        }
+      }
+    })
 
     return {
       form,

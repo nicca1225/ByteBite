@@ -203,10 +203,13 @@
             :disabled="isLoading"
             class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-lg font-bold rounded-2xl text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
-            <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-3">
-              <div class="spinner"></div>
+            <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-6">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
             </span>
-            <span v-else class="absolute left-0 inset-y-0 flex items-center pl-3">
+            <span v-else class="absolute left-0 inset-y-0 flex items-center pl-6">
               <svg class="h-5 w-5 text-emerald-200 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
               </svg>
@@ -367,7 +370,11 @@ export default {
 
       try {
         await authStore.register(form.value.name.trim(), form.value.email.trim(), form.value.password)
-        router.push('/dashboard')
+        // Redirect to login with success message
+        router.push({
+          path: '/login',
+          query: { registered: 'true', email: form.value.email.trim() }
+        })
       } catch (err) {
         error.value = err.message || 'Registration failed. Please try again.'
       } finally {
@@ -381,7 +388,7 @@ export default {
 
       try {
         await authStore.loginWithGoogle()
-        router.push('/dashboard')
+        router.push('/home')
       } catch (err) {
         error.value = err.message || 'Google sign-up failed. Please try again.'
       } finally {

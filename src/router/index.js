@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import Home from '../views/Home.vue'
+import Landing from '../views/Landing.vue'
+import UserHome from '../views/UserHome.vue'
 import About from '../views/About.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
@@ -11,8 +12,15 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: Landing,
+      meta: { requiresGuest: true }
+    },
+    {
+      path: '/home',
       name: 'home',
-      component: Home
+      component: UserHome,
+      meta: { requiresAuth: true }
     },
     {
       path: '/about',
@@ -41,26 +49,38 @@ const router = createRouter({
 })
 
 // Navigation guards
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  
-  // Initialize Firebase auth state
+
+  // Initialize Firebase auth state and wait for it
   if (!authStore.authInitialized) {
-    authStore.initializeAuth()
+    await new Promise((resolve) => {
+      authStore.initializeAuth()
+      // Wait maximum 500ms for auth to initialize
+      const timeout = setTimeout(resolve, 500)
+      // Check every 50ms if auth is initialized
+      const interval = setInterval(() => {
+        if (authStore.authInitialized) {
+          clearTimeout(timeout)
+          clearInterval(interval)
+          resolve()
+        }
+      }, 50)
+    })
   }
-  
+
   // Check if route requires authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
     return
   }
-  
+
   // Check if route requires guest (not authenticated)
   if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next('/dashboard')
+    next('/home')
     return
   }
-  
+
   next()
 })
 
