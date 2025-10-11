@@ -1,20 +1,20 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <!-- Header -->
       <div class="text-center">
-        <div class="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl">
-          <span class="text-3xl">🍽️</span>
+        <div class="mx-auto h-56 w-56 rounded-3xl flex items-center justify-center shadow-2xl overflow-hidden">
+          <img src="/ByteBites.png" alt="ByteBite Logo" class="w-full h-full object-cover" />
         </div>
-        <h2 class="text-4xl font-black text-gray-900 mb-2">
+        <h2 class="text-4xl font-black text-white -mt-4 mb-2">
           Join ByteBite
         </h2>
-        <p class="text-lg text-gray-600 mb-2">
+        <p class="text-lg text-gray-300 mb-2">
           Start your smart meal planning journey
         </p>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-gray-400">
           Already have an account?
-          <router-link to="/login" class="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">
+          <router-link to="/login" class="font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">
             Sign in here
           </router-link>
         </p>
@@ -25,7 +25,7 @@
         <button
           @click="handleGoogleLogin"
           :disabled="isLoading"
-          class="group relative w-full flex justify-center items-center py-4 px-4 border-2 border-gray-300 rounded-2xl bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+          class="group relative w-full flex justify-center items-center py-4 px-4 border-2 border-yellow-400/30 rounded-2xl bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
         >
           <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -33,7 +33,7 @@
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          <span class="text-gray-700 font-semibold">
+          <span class="text-white font-semibold">
             {{ isLoading ? 'Creating account...' : 'Continue with Google' }}
           </span>
         </button>
@@ -44,7 +44,7 @@
             <div class="w-full border-t border-gray-300"></div>
           </div>
           <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 text-gray-500">Or create account with email</span>
+            <span class="px-2 bg-black text-gray-400">Or create account with email</span>
           </div>
         </div>
       </div>
@@ -53,7 +53,7 @@
       <form class="space-y-6" @submit.prevent="handleRegister">
         <div class="space-y-4">
           <div>
-            <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+            <label for="name" class="block text-sm font-semibold text-gray-300 mb-2">Full Name</label>
             <input
               id="name"
               v-model="form.name"
@@ -63,16 +63,16 @@
               autocomplete="name"
               required
               :class="[
-                'w-full px-4 py-4 border-2 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-white shadow-sm hover:shadow-md',
-                validationErrors.name ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                'w-full px-4 py-4 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                validationErrors.name ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
               ]"
               placeholder="Enter your full name"
             />
-            <p v-if="validationErrors.name" class="mt-2 text-sm text-red-600">{{ validationErrors.name }}</p>
+            <p v-if="validationErrors.name" class="mt-2 text-sm text-red-400">{{ validationErrors.name }}</p>
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+            <label for="email" class="block text-sm font-semibold text-gray-300 mb-2">Email Address</label>
             <input
               id="email"
               v-model="form.email"
@@ -82,16 +82,16 @@
               autocomplete="email"
               required
               :class="[
-                'w-full px-4 py-4 border-2 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-white shadow-sm hover:shadow-md',
-                validationErrors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                'w-full px-4 py-4 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                validationErrors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
               ]"
               placeholder="Enter your email"
             />
-            <p v-if="validationErrors.email" class="mt-2 text-sm text-red-600">{{ validationErrors.email }}</p>
+            <p v-if="validationErrors.email" class="mt-2 text-sm text-red-400">{{ validationErrors.email }}</p>
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <label for="password" class="block text-sm font-semibold text-gray-300 mb-2">Password</label>
             <div class="relative">
               <input
                 id="password"
@@ -103,15 +103,15 @@
                 autocomplete="new-password"
                 required
                 :class="[
-                  'w-full px-4 py-4 pr-12 border-2 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-white shadow-sm hover:shadow-md',
-                  validationErrors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                  'w-full px-4 py-4 pr-12 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                  validationErrors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
                 ]"
                 placeholder="Create a password (min. 6 characters)"
               />
               <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300"
               >
                 <svg v-if="!showPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -124,7 +124,7 @@
             </div>
             <div v-if="form.password" class="mt-2">
               <div class="flex items-center space-x-2 mb-1">
-                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
                   <div
                     :class="[
                       'h-full transition-all duration-300',
@@ -136,17 +136,17 @@
                 </div>
                 <span :class="[
                   'text-xs font-semibold',
-                  passwordStrength === 'weak' ? 'text-red-600' : '',
-                  passwordStrength === 'medium' ? 'text-yellow-600' : '',
-                  passwordStrength === 'strong' ? 'text-green-600' : ''
+                  passwordStrength === 'weak' ? 'text-red-400' : '',
+                  passwordStrength === 'medium' ? 'text-yellow-400' : '',
+                  passwordStrength === 'strong' ? 'text-green-400' : ''
                 ]">{{ passwordStrength }}</span>
               </div>
             </div>
-            <p v-if="validationErrors.password" class="mt-2 text-sm text-red-600">{{ validationErrors.password }}</p>
+            <p v-if="validationErrors.password" class="mt-2 text-sm text-red-400">{{ validationErrors.password }}</p>
           </div>
 
           <div>
-            <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+            <label for="confirmPassword" class="block text-sm font-semibold text-gray-300 mb-2">Confirm Password</label>
             <div class="relative">
               <input
                 id="confirmPassword"
@@ -157,15 +157,15 @@
                 autocomplete="new-password"
                 required
                 :class="[
-                  'w-full px-4 py-4 pr-12 border-2 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-white shadow-sm hover:shadow-md',
-                  validationErrors.confirmPassword ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'
+                  'w-full px-4 py-4 pr-12 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                  validationErrors.confirmPassword ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
                 ]"
                 placeholder="Confirm your password"
               />
               <button
                 type="button"
                 @click="showConfirmPassword = !showConfirmPassword"
-                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300"
               >
                 <svg v-if="!showConfirmPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -176,7 +176,7 @@
                 </svg>
               </button>
             </div>
-            <p v-if="validationErrors.confirmPassword" class="mt-2 text-sm text-red-600">{{ validationErrors.confirmPassword }}</p>
+            <p v-if="validationErrors.confirmPassword" class="mt-2 text-sm text-red-400">{{ validationErrors.confirmPassword }}</p>
           </div>
         </div>
 
@@ -187,13 +187,13 @@
             name="agree-terms"
             type="checkbox"
             required
-            class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded mt-1"
+            class="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-300 rounded mt-1"
           />
-          <label for="agree-terms" class="ml-3 block text-sm text-gray-700">
+          <label for="agree-terms" class="ml-3 block text-sm text-gray-300">
             I agree to the
-            <a href="#" class="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">Terms of Service</a>
+            <a href="#" class="font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">Terms of Service</a>
             and
-            <a href="#" class="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">Privacy Policy</a>
+            <a href="#" class="font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">Privacy Policy</a>
           </label>
         </div>
 
@@ -201,16 +201,16 @@
           <button
             type="submit"
             :disabled="isLoading"
-            class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-lg font-bold rounded-2xl text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+            class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-lg font-bold rounded-2xl text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
             <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-6">
-              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </span>
             <span v-else class="absolute left-0 inset-y-0 flex items-center pl-6">
-              <svg class="h-5 w-5 text-emerald-200 group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg class="h-5 w-5 text-black/70 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
               </svg>
             </span>
@@ -218,7 +218,7 @@
           </button>
         </div>
 
-        <div v-if="error" class="bg-red-50 border border-red-200 rounded-2xl p-4">
+        <div v-if="error" class="bg-red-900/20 border border-red-400/30 rounded-2xl p-4">
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -226,7 +226,7 @@
               </svg>
             </div>
             <div class="ml-3">
-              <p class="text-sm text-red-800">{{ error }}</p>
+              <p class="text-sm text-red-400">{{ error }}</p>
             </div>
           </div>
         </div>

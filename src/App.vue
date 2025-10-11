@@ -1,12 +1,12 @@
 <template>
-  <div id="app" class="min-h-screen flex flex-col bg-gray-50">
+  <div id="app" class="min-h-screen flex flex-col bg-black">
     <nav v-if="!isLandingPage" class="bg-black/90 backdrop-blur-md border-b border-yellow-400/30 shadow-lg sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <!-- Logo -->
           <router-link :to="isAuthenticated ? '/home' : '/'" class="flex items-center space-x-3 group">
-            <div class="w-10 h-10 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-              <span class="text-xl">🍽️</span>
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 overflow-hidden">
+              <img src="/ByteBites.png" alt="ByteBite Logo" class="w-full h-full object-cover" />
             </div>
             <span class="text-2xl font-black text-white group-hover:text-yellow-400 transition-colors duration-300">
               Byte<span class="text-yellow-400">Bite</span>
@@ -125,15 +125,15 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
           <div class="flex items-center justify-center space-x-3 mb-4">
-            <div class="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center">
-              <span class="text-lg">🍽️</span>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden">
+              <img src="/ByteBites.png" alt="ByteBite Logo" class="w-full h-full object-cover" />
             </div>
             <span class="text-xl font-black text-white">
               Byte<span class="text-yellow-400">Bite</span>
             </span>
           </div>
           <p class="text-gray-400 mb-4">Smart meal planning for students</p>
-          <p class="text-sm text-gray-500">&copy; 2024 ByteBite. All rights reserved.</p>
+          <p class="text-sm text-gray-500">&copy; 2025 ByteBite. All rights reserved.</p>
         </div>
       </div>
     </footer>
