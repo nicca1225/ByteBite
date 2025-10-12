@@ -6,6 +6,7 @@ import About from '../views/About.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
+import FindRecipes from '../views/FindRecipes.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,12 @@ const router = createRouter({
       name: 'dashboard',
       component: Dashboard,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/find-recipes',
+      name: 'find-recipes',
+      component: FindRecipes,
+      meta: { requiresAuth: true } // keep it behind auth like /home
     }
   ]
 })
