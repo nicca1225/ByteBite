@@ -28,7 +28,8 @@
     <div class="bg-gray-900 p-6 rounded-xl shadow-lg border border-yellow-400/30">
       <h2 class="text-2xl font-bold text-yellow-400 mb-4">Quick Actions</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200">
+        <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200" 
+        @click="$router.push('/find-recipes')">
           <div class="text-2xl mb-2">🔍</div>
           <div class="font-semibold text-gray-300">Find Recipes</div>
         </button>
