@@ -33,6 +33,11 @@
           <div class="text-2xl mb-2">🔍</div>
           <div class="font-semibold text-gray-300">Find Recipes</div>
         </button>
+        <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200" 
+        @click="$router.push('/calorie-tracker')">
+          <div class="text-2xl mb-2">🔥</div>
+          <div class="font-semibold text-gray-300">Calorie Tracker</div>
+        </button>
         <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200">
           <div class="text-2xl mb-2">📅</div>
           <div class="font-semibold text-gray-300">Schedule Meals</div>
