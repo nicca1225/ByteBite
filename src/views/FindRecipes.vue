@@ -11,7 +11,7 @@
             v-model.trim="query"
             type="text"
             placeholder="Search recipes… e.g. chicken, tofu, pasta"
-            class="form-input flex-1"
+            class="form-input flex-1 text-black placeholder-gray-400"
             style="color: black;"
           />
             <button
@@ -33,7 +33,7 @@
       <!-- sticky/top search bar -->
       <div class="sticky top-0 z-10 bg-black/80 backdrop-blur border-b border-gray-800 -mx-4 px-4 py-3">
         <form @submit.prevent="onSearch" class="max-w-5xl mx-auto flex gap-3">
-          <input v-model.trim="query" type="text" placeholder="Search recipes…" class="form-input flex-1" style="color: black;" />
+          <input v-model.trim="query" type="text" placeholder="Search recipes…" class="form-input flex-1 text-black placeholder-gray-400" style="color: black;" />
           <button
                 class="px-6 py-2 rounded-xl font-semibold border border-yellow-400 text-yellow-400 bg-amber-800 hover:bg-amber-700 transition disabled:opacity-50"
                 :disabled="loading || !apiKey"
@@ -107,32 +107,48 @@ async function onSearch() {
 
   loading.value = true
   try {
-    const params = new URLSearchParams({
-      query: query.value,
-      number: '36',
-      addRecipeInformation: 'true', // includes aggregateLikes
-      sort: 'popularity',           // most → least popular
-      apiKey
-    })
-    const res = await fetch(`https://api.spoonacular.com/recipes/complexSearch?${params}`)
-    if (!res.ok) throw new Error(`Spoonacular error ${res.status}: ${await res.text()}`)
-    const data = await res.json()
+  const params = new URLSearchParams({
+    number: '100',
+    addRecipeInformation: 'true', // includes aggregateLikes
+    sort: 'popularity',           // most → least popular
+    apiKey
+  })
+  // title-only server hint
+  params.set('titleMatch', query.value.trim())
 
-    // Fallback client sort by popularity just in case
-    results.value = (data.results || [])
-      .map(r => ({
-        id: r.id,
-        title: r.title,
-        image: r.image,
-        readyInMinutes: r.readyInMinutes ?? null,
-        aggregateLikes: typeof r.aggregateLikes === 'number' ? r.aggregateLikes : null
-      }))
-      .sort((a, b) => (b.aggregateLikes ?? 0) - (a.aggregateLikes ?? 0))
-  } catch (e) {
-    console.error(e)
-    error.value = e?.message || 'Failed to fetch recipes.'
-  } finally {
-    loading.value = false
-  }
+  const url = `https://api.spoonacular.com/recipes/complexSearch?${params}`
+  console.log('[req]', url)  // <-- helps verify there is NO "query=" param
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Spoonacular error ${res.status}: ${await res.text()}`)
+  const data = await res.json()
+
+  // Strict client filter (whole-word match for every word typed)
+  const q = query.value.trim()
+  const words = q.split(/\s+/).filter(Boolean)
+  const wordRegexes = words.map(w =>
+    new RegExp(`\\b${w.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'i')
+  )
+
+  results.value = (data.results || [])
+    .map(r => ({
+      id: r.id,
+      title: r.title || '',
+      image: r.image,
+      readyInMinutes: r.readyInMinutes ?? null,
+      aggregateLikes: typeof r.aggregateLikes === 'number' ? r.aggregateLikes : null
+    }))
+    // ✅ Title must contain ALL words as whole words
+    .filter(r => wordRegexes.every(rx => rx.test(r.title)))
+    // Popularity fallback sort (server already sorts by popularity)
+    .sort((a, b) => (b.aggregateLikes ?? 0) - (a.aggregateLikes ?? 0))
+
+  // Optional: peek at first few titles in console
+  console.log('[titles]', results.value.slice(0, 5).map(r => r.title))
+} catch (e) {
+  console.error(e)
+  error.value = e?.message || 'Failed to fetch recipes.'
+} finally {
+  loading.value = false
+}
 }
 </script>
