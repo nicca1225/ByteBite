@@ -26,8 +26,8 @@
         <div class="text-center w-full">
           <!-- Header -->
           <div class="mb-4">
-            <h1 class="text-5xl sm:text-6xl font-black text-white -mt-2 mb-2 tracking-tight drop-shadow-2xl" >
-              Meal Planning<span class="text-yellow-300 drop-shadow-lg"> for Students</span>
+            <h1 class="text-5xl sm:text-6xl font-black text-white -mt-2 mb-10 tracking-tight drop-shadow-2xl" >
+              Byte<span class="text-yellow-300 drop-shadow-lg">Bite</span>
             </h1>
           </div>
 
