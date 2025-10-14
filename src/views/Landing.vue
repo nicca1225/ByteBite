@@ -5,7 +5,7 @@
       :style="{ backgroundImage: `url(${foodPhoto})` }">
 
       <!-- Dark Overlay for Better Text Visibility -->
-      <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80"></div>
 
       <!-- Landing Page Header -->
       <nav class="relative z-10 w-full py-6">
@@ -19,38 +19,24 @@
               Byte<span class="text-yellow-400">Bite</span>
             </span>
           </div>
-
-          <!-- Get Started Button -->
-          <button
-            class="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2.5 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            @click="goToRegister">
-            Get Started
-          </button>
         </div>
       </nav>
 
       <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex-1 flex items-center">
         <div class="text-center w-full">
-          <!-- Logo/Brand -->
+          <!-- Header -->
           <div class="mb-4">
-            <div
-              class="inline-flex items-center justify-center w-48 h-48 sm:w-56 sm:h-56 rounded-3xl shadow-xl overflow-hidden">
-              <img :src="logo" alt="ByteBite Logo" class=" mt-12 block w-[110%] h-[110%] object-contain scale-105" />
-
-
-            </div>
-            <h1 class="text-5xl sm:text-7xl font-black text-white -mt-2 mb-2 tracking-tight drop-shadow-2xl">
-              Byte<span class="text-yellow-300 drop-shadow-lg">Bite</span>
+            <h1 class="text-5xl sm:text-6xl font-black text-white -mt-2 mb-2 tracking-tight drop-shadow-2xl" >
+              Meal Planning<span class="text-yellow-300 drop-shadow-lg"> for Students</span>
             </h1>
           </div>
 
           <!-- Tagline -->
-          <p class="text-xl sm:text-2xl text-white mb-4 font-bold drop-shadow-lg">
+          <!-- <p class="text-xl sm:text-2xl text-white mb-4 font-bold drop-shadow-lg">
             Smart Meal Planning for Students
-          </p>
-          <p class="text-lg sm:text-xl text-gray-100 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-            Transform your eating habits with AI-powered meal planning that fits your budget,
-            dietary needs, and busy student lifestyle.
+          </p> -->
+          <p class="text-lg sm:text-xl text-gray-190 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+            AI-powered meal planning that actually fits <br> your budget, dietary needs, and busy student lifestyle.
           </p>
 
           <!-- CTA Buttons -->
