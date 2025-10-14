@@ -1,18 +1,18 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+  <div class="min-h-screen flex items-start justify-center bg-black pt-8 pb-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-3">
       <!-- Header -->
       <div class="text-center">
-        <div class="mx-auto h-56 w-56 rounded-3xl flex items-center justify-center shadow-2xl overflow-hidden">
+        <div class="mx-auto h-28 w-28 rounded-3xl flex items-center justify-center shadow-2xl overflow-hidden">
           <img src="/ByteBites.png" alt="ByteBite Logo" class="w-full h-full object-cover" />
         </div>
-        <h2 class="text-4xl font-black text-white -mt-4 mb-2">
+        <h2 class="text-2xl font-black text-white -mt-1 mb-0.5">
           Join ByteBite
         </h2>
-        <p class="text-lg text-gray-300 mb-2">
+        <p class="text-sm text-gray-300 mb-0.5">
           Start your smart meal planning journey
         </p>
-        <p class="text-sm text-gray-400">
+        <p class="text-xs text-gray-400">
           Already have an account?
           <router-link to="/login" class="font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">
             Sign in here
@@ -21,11 +21,11 @@
       </div>
 
       <!-- Google Sign Up -->
-      <div class="space-y-4">
+      <div class="space-y-2">
         <button
           @click="handleGoogleLogin"
           :disabled="isLoading"
-          class="group relative w-full flex justify-center items-center py-4 px-4 border-2 border-yellow-400/30 rounded-2xl bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+          class="group relative w-full flex justify-center items-center py-3 px-4 border-2 border-yellow-400/30 rounded-2xl bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
         >
           <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -50,10 +50,10 @@
       </div>
 
       <!-- Registration Form -->
-      <form class="space-y-6" @submit.prevent="handleRegister">
-        <div class="space-y-4">
+      <form class="space-y-3" @submit.prevent="handleRegister">
+        <div class="space-y-2.5">
           <div>
-            <label for="name" class="block text-sm font-semibold text-gray-300 mb-2">Full Name</label>
+            <label for="name" class="block text-sm font-semibold text-gray-300 mb-1">Full Name</label>
             <input
               id="name"
               v-model="form.name"
@@ -63,7 +63,7 @@
               autocomplete="name"
               required
               :class="[
-                'w-full px-4 py-4 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                'w-full px-4 py-3 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
                 validationErrors.name ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
               ]"
               placeholder="Enter your full name"
@@ -72,7 +72,7 @@
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-semibold text-gray-300 mb-2">Email Address</label>
+            <label for="email" class="block text-sm font-semibold text-gray-300 mb-1">Email Address</label>
             <input
               id="email"
               v-model="form.email"
@@ -82,7 +82,7 @@
               autocomplete="email"
               required
               :class="[
-                'w-full px-4 py-4 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                'w-full px-4 py-3 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
                 validationErrors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
               ]"
               placeholder="Enter your email"
@@ -91,7 +91,7 @@
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-semibold text-gray-300 mb-2">Password</label>
+            <label for="password" class="block text-sm font-semibold text-gray-300 mb-1">Password</label>
             <div class="relative">
               <input
                 id="password"
@@ -103,7 +103,7 @@
                 autocomplete="new-password"
                 required
                 :class="[
-                  'w-full px-4 py-4 pr-12 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                  'w-full px-4 py-3 pr-12 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
                   validationErrors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
                 ]"
                 placeholder="Create a password (min. 6 characters)"
@@ -146,7 +146,7 @@
           </div>
 
           <div>
-            <label for="confirmPassword" class="block text-sm font-semibold text-gray-300 mb-2">Confirm Password</label>
+            <label for="confirmPassword" class="block text-sm font-semibold text-gray-300 mb-1">Confirm Password</label>
             <div class="relative">
               <input
                 id="confirmPassword"
@@ -157,7 +157,7 @@
                 autocomplete="new-password"
                 required
                 :class="[
-                  'w-full px-4 py-4 pr-12 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
+                  'w-full px-4 py-3 pr-12 border-2 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 bg-gray-900 shadow-sm hover:shadow-md',
                   validationErrors.confirmPassword ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-yellow-400/30 focus:ring-yellow-400 focus:border-yellow-400'
                 ]"
                 placeholder="Confirm your password"
@@ -201,7 +201,7 @@
           <button
             type="submit"
             :disabled="isLoading"
-            class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-lg font-bold rounded-2xl text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-bold rounded-2xl text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
             <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-6">
               <svg class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
