@@ -32,13 +32,25 @@ if (missingVars.length > 0) {
 let app, auth, db, analytics
 
 try {
+  console.log('🔥 Initializing Firebase...')
+  console.log('📋 Firebase Config:', {
+    apiKey: firebaseConfig.apiKey ? '✅ Set' : '❌ Missing',
+    authDomain: firebaseConfig.authDomain ? '✅ Set' : '❌ Missing',
+    projectId: firebaseConfig.projectId ? '✅ Set' : '❌ Missing',
+    storageBucket: firebaseConfig.storageBucket ? '✅ Set' : '❌ Missing',
+  })
+
   app = initializeApp(firebaseConfig)
   auth = getAuth(app)
   db = getFirestore(app)
   analytics = typeof window !== 'undefined' ? getAnalytics(app) : null
-  console.log('Firebase initialized successfully')
+
+  console.log('✅ Firebase initialized successfully')
+  console.log('✅ Firestore database:', db ? 'Connected' : 'Not connected')
+  console.log('✅ Auth:', auth ? 'Initialized' : 'Not initialized')
 } catch (error) {
-  console.error('Firebase initialization error:', error)
+  console.error('❌ Firebase initialization error:', error)
+  console.error('Error details:', error.message)
 }
 
 export { auth, db, analytics }
