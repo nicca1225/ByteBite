@@ -7,6 +7,7 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 import FindRecipes from '../views/FindRecipes.vue'
+import CalorieTracker from '../views/CalorieTracker.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +52,12 @@ const router = createRouter({
       name: 'find-recipes',
       component: FindRecipes,
       meta: { requiresAuth: true } // keep it behind auth like /home
+    },
+    {
+      path: '/calorie-tracker',
+      name: 'calorie-tracker',
+      component: CalorieTracker,
+      meta: { requiresAuth: true }
     }
   ]
 })
