@@ -35,6 +35,18 @@
         <form @submit.prevent="onSearch" class="max-w-5xl mx-auto flex gap-3">
           <input v-model.trim="query" type="text" placeholder="Search recipes…" class="form-input flex-1 text-black placeholder-gray-400" style="color: black;" />
           <button
+                type="button"
+                @click="refreshResults"
+                class="px-4 py-2 rounded-xl font-semibold border border-yellow-400 text-yellow-400 bg-amber-800 hover:bg-amber-700 transition disabled:opacity-50"
+                :disabled="loading || !apiKey || !query"
+                title="Refresh results"
+            >
+                <svg class="w-5 h-5" :class="{'animate-spin': loading}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+            </button>
+          <button
+                type="submit"
                 class="px-6 py-2 rounded-xl font-semibold border border-yellow-400 text-yellow-400 bg-amber-800 hover:bg-amber-700 transition disabled:opacity-50"
                 :disabled="loading || !apiKey"
             >
@@ -150,5 +162,12 @@ async function onSearch() {
 } finally {
   loading.value = false
 }
+}
+
+function refreshResults() {
+  // Refresh the current search
+  if (query.value) {
+    onSearch()
+  }
 }
 </script>
