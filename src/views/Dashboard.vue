@@ -12,16 +12,30 @@
         <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">Plan Meals</button>
       </div>
 
-      <div class="bg-gray-900 p-6 rounded-xl shadow-lg border-l-4 border-yellow-400">
-        <h3 class="text-xl font-semibold text-yellow-400 mb-2">🛒 Shopping List</h3>
-        <p class="text-gray-300 mb-4">Generate your shopping list</p>
-        <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">View List</button>
+      <div class="group bg-gradient-to-br from-gray-900 to-black p-6 rounded-xl shadow-lg border border-gray-800/50 hover:border-yellow-400/30 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 border border-gray-700 rounded-lg flex items-center justify-center group-hover:border-yellow-400/50 transition-colors">
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-yellow-400">Shopping List</h3>
+        </div>
+        <p class="text-gray-300 mb-4 font-light">Generate your shopping list</p>
+        <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-400/20">View List</button>
       </div>
 
-      <div class="bg-gray-900 p-6 rounded-xl shadow-lg border-l-4 border-yellow-400">
-        <h3 class="text-xl font-semibold text-yellow-400 mb-2">💰 Budget Tracker</h3>
-        <p class="text-gray-300 mb-4">Track your meal expenses</p>
-        <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">View Budget</button>
+      <div class="group bg-gradient-to-br from-gray-900 to-black p-6 rounded-xl shadow-lg border border-gray-800/50 hover:border-yellow-400/30 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 border border-gray-700 rounded-lg flex items-center justify-center group-hover:border-yellow-400/50 transition-colors">
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-yellow-400">Budget Tracker</h3>
+        </div>
+        <p class="text-gray-300 mb-4 font-light">Track your meal expenses</p>
+        <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-400/20">View Budget</button>
       </div>
     </div>
 

@@ -91,20 +91,32 @@
             </div>
           </button>
 
-          <button 
-            class="group bg-gray-900 hover:bg-black p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-400/30 hover:border-yellow-400 text-left"
+          <button
+            class="group relative bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 hover:border-yellow-400/30 p-6 rounded-xl transition-all duration-300 text-left overflow-hidden"
             @click="$router.push('/shopping-list')"
           >
-            <div class="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-300 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span class="text-3xl">🛒</span>
+            <div class="absolute inset-0 bg-yellow-400/0 group-hover:bg-yellow-400/5 transition-colors duration-300"></div>
+            <div class="relative">
+              <div class="w-12 h-12 border border-gray-700 rounded-lg flex items-center justify-center mb-4 group-hover:border-yellow-400/50 transition-colors">
+                <svg class="w-6 h-6 text-gray-400 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+              </div>
+              <h3 class="text-base font-medium text-white mb-1">Shopping List</h3>
+              <p class="text-gray-500 text-sm font-light">View your grocery list</p>
             </div>
-            <h3 class="text-lg font-bold text-white mb-2">Shopping List</h3>
-            <p class="text-gray-300 text-sm">View your grocery list</p>
           </button>
 
-          <button class="group bg-gray-900 hover:bg-black p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-400/30 hover:border-yellow-400 text-left">
-            <div class="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-300 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span class="text-3xl">💰</span>
+          <button class="group relative bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 hover:border-yellow-400/30 p-6 rounded-xl transition-all duration-300 text-left overflow-hidden">
+            <div class="absolute inset-0 bg-yellow-400/0 group-hover:bg-yellow-400/5 transition-colors duration-300"></div>
+            <div class="relative">
+              <div class="w-12 h-12 border border-gray-700 rounded-lg flex items-center justify-center mb-4 group-hover:border-yellow-400/50 transition-colors">
+                <svg class="w-6 h-6 text-gray-400 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <h3 class="text-base font-medium text-white mb-1">Budget Tracker</h3>
+              <p class="text-gray-500 text-sm font-light">Monitor your spending</p>
             </div>
           </button>
         </div>
@@ -172,11 +184,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <!-- Meal Card 1 -->
           <div class="group bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl overflow-hidden hover:border-yellow-400/30 transition-all duration-300">
-            <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative overflow-hidden">
-              <div class="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent"></div>
-              <svg class="w-16 h-16 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
+            <div class="aspect-video relative overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop"
+                alt="Caesar Salad Bowl"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60"></div>
             </div>
             <div class="p-5">
               <div class="flex items-center gap-2 mb-3">
@@ -197,11 +211,13 @@
 
           <!-- Meal Card 2 -->
           <div class="group bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl overflow-hidden hover:border-yellow-400/30 transition-all duration-300">
-            <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative overflow-hidden">
-              <div class="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent"></div>
-              <svg class="w-16 h-16 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
+            <div class="aspect-video relative overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop"
+                alt="Spaghetti Carbonara"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60"></div>
             </div>
             <div class="p-5">
               <div class="flex items-center gap-2 mb-3">
@@ -222,11 +238,13 @@
 
           <!-- Meal Card 3 -->
           <div class="group bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl overflow-hidden hover:border-yellow-400/30 transition-all duration-300">
-            <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative overflow-hidden">
-              <div class="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent"></div>
-              <svg class="w-16 h-16 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
+            <div class="aspect-video relative overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=400&h=300&fit=crop"
+                alt="Protein Pancakes"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60"></div>
             </div>
             <div class="p-5">
               <div class="flex items-center gap-2 mb-3">

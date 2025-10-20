@@ -1,14 +1,14 @@
 <!-- src/views/RecipeDetail.vue -->
 <template>
-  <main class="min-h-screen bg-black px-4 py-8">
+  <main class="min-h-screen bg-gray-50 px-4 py-8">
     <div class="max-w-5xl mx-auto">
       <!-- Back Button -->
       <button
         @click="goBack"
-        class="mb-8 text-gray-400 hover:text-yellow-400 font-mono uppercase tracking-wider text-sm flex items-center gap-2 transition-colors"
+        class="mb-6 text-primary-600 hover:text-primary-700 font-semibold flex items-center gap-2 transition-colors"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
         </svg>
         Back to Search
       </button>
@@ -19,79 +19,72 @@
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="bg-red-900/20 border border-red-500/30 text-red-300 p-4 rounded-xl text-sm">
+      <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
         {{ error }}
       </div>
 
       <!-- Recipe Content -->
-      <article v-else-if="recipe" class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl overflow-hidden">
+      <article v-else-if="recipe" class="bg-white rounded-lg shadow-lg overflow-hidden">
         <!-- Hero Image -->
-        <div class="relative h-72 sm:h-96 overflow-hidden">
+        <div class="relative h-64 sm:h-96">
           <img
             :src="recipe.image"
             :alt="recipe.title"
             class="w-full h-full object-cover"
           />
-          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-8">
-            <div class="inline-block mb-3">
-              <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/20">
-                Recipe Details
-              </span>
-            </div>
-            <h1 class="text-3xl sm:text-4xl font-light text-white">
-              {{ recipe.title }}
-            </h1>
-          </div>
         </div>
 
         <!-- Recipe Info -->
         <div class="p-6 sm:p-8">
+          <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            {{ recipe.title }}
+          </h1>
+
           <!-- Quick Stats -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 pb-8 border-b border-gray-800/50">
-            <div class="bg-black border border-gray-800/50 rounded-lg p-4">
-              <div class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Time</div>
-              <div class="text-2xl font-light text-white">{{ recipe.readyInMinutes }}</div>
-              <div class="text-xs text-gray-600 font-mono">minutes</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 pb-8 border-b">
+            <div class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Time</div>
+              <div class="text-2xl font-bold text-primary-600">{{ recipe.readyInMinutes }}</div>
+              <div class="text-xs text-gray-500">minutes</div>
             </div>
-            <div v-if="recipe.servings" class="bg-black border border-gray-800/50 rounded-lg p-4">
-              <div class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Servings</div>
-              <div class="text-2xl font-light text-white">{{ recipe.servings }}</div>
-              <div class="text-xs text-gray-600 font-mono">portions</div>
+            <div v-if="recipe.servings" class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Servings</div>
+              <div class="text-2xl font-bold text-primary-600">{{ recipe.servings }}</div>
+              <div class="text-xs text-gray-500">portions</div>
             </div>
-            <div v-if="recipe.aggregateLikes" class="bg-black border border-gray-800/50 rounded-lg p-4">
-              <div class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Likes</div>
-              <div class="text-2xl font-light text-white">{{ recipe.aggregateLikes }}</div>
-              <div class="text-xs text-gray-600 font-mono">total</div>
+            <div v-if="recipe.aggregateLikes" class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Likes</div>
+              <div class="text-2xl font-bold text-primary-600">{{ recipe.aggregateLikes }}</div>
+              <div class="text-xs text-gray-500">total</div>
             </div>
-            <div v-if="recipe.healthScore" class="bg-black border border-gray-800/50 rounded-lg p-4">
-              <div class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Health Score</div>
-              <div class="text-2xl font-light text-white">{{ recipe.healthScore }}</div>
-              <div class="text-xs text-gray-600 font-mono">out of 100</div>
+            <div v-if="recipe.healthScore" class="text-center">
+              <div class="text-sm text-gray-600 mb-1">Health Score</div>
+              <div class="text-2xl font-bold text-primary-600">{{ recipe.healthScore }}</div>
+              <div class="text-xs text-gray-500">out of 100</div>
             </div>
           </div>
 
           <!-- Diet & Health Info -->
-          <div v-if="recipe.diets?.length || recipe.dishTypes?.length" class="mb-8 pb-8 border-b border-gray-800/50">
+          <div v-if="recipe.diets?.length || recipe.dishTypes?.length" class="mb-8 pb-8 border-b">
             <div v-if="recipe.diets?.length" class="mb-4">
-              <h3 class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-3">Diets</h3>
+              <h3 class="text-sm font-semibold text-gray-600 uppercase mb-3">Diets</h3>
               <div class="flex flex-wrap gap-2">
                 <span
                   v-for="diet in recipe.diets"
                   :key="diet"
-                  class="px-3 py-1.5 bg-green-900/20 border border-green-700/30 text-green-400 rounded-lg text-sm font-mono"
+                  class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
                 >
                   {{ diet }}
                 </span>
               </div>
             </div>
             <div v-if="recipe.dishTypes?.length">
-              <h3 class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-3">Dish Types</h3>
+              <h3 class="text-sm font-semibold text-gray-600 uppercase mb-3">Dish Types</h3>
               <div class="flex flex-wrap gap-2">
                 <span
                   v-for="type in recipe.dishTypes"
                   :key="type"
-                  class="px-3 py-1.5 bg-blue-900/20 border border-blue-700/30 text-blue-400 rounded-lg text-sm font-mono"
+                  class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                 >
                   {{ type }}
                 </span>
@@ -100,34 +93,32 @@
           </div>
 
           <!-- Summary -->
-          <div v-if="recipe.summary" class="mb-8 pb-8 border-b border-gray-800/50">
-            <h2 class="text-2xl font-light text-white mb-4">About This Recipe</h2>
+          <div v-if="recipe.summary" class="mb-8 pb-8 border-b">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">About This Recipe</h2>
             <div
-              class="text-gray-400 leading-relaxed prose prose-invert max-w-none font-light"
+              class="text-gray-700 leading-relaxed"
               v-html="recipe.summary"
             ></div>
           </div>
 
           <!-- Ingredients -->
-          <div v-if="recipe.extendedIngredients?.length" class="mb-8 pb-8 border-b border-gray-800/50">
-            <h2 class="text-2xl font-light text-white mb-4">Ingredients</h2>
-            <div class="bg-black border border-gray-800/50 rounded-xl p-6">
-              <ul class="space-y-3">
-                <li
-                  v-for="ingredient in recipe.extendedIngredients"
-                  :key="ingredient.id"
-                  class="flex items-start gap-3 text-gray-400 font-light"
-                >
-                  <span class="text-yellow-400 mt-1 text-xs">▸</span>
-                  <span>{{ ingredient.original }}</span>
-                </li>
-              </ul>
-            </div>
+          <div v-if="recipe.extendedIngredients?.length" class="mb-8 pb-8 border-b">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
+            <ul class="space-y-2">
+              <li
+                v-for="ingredient in recipe.extendedIngredients"
+                :key="ingredient.id"
+                class="flex items-start gap-3 text-gray-700"
+              >
+                <span class="text-primary-600 mt-1">•</span>
+                <span>{{ ingredient.original }}</span>
+              </li>
+            </ul>
           </div>
 
           <!-- Instructions -->
           <div v-if="recipe.instructions || recipe.analyzedInstructions?.length" class="mb-8">
-            <h2 class="text-2xl font-light text-white mb-4">Instructions</h2>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
 
             <!-- Analyzed Instructions (step by step) -->
             <div v-if="recipe.analyzedInstructions?.length">
@@ -136,7 +127,7 @@
                 :key="idx"
                 class="mb-6"
               >
-                <h3 v-if="section.name" class="text-sm font-mono uppercase tracking-wider text-yellow-400 mb-4">
+                <h3 v-if="section.name" class="text-lg font-semibold text-primary-600 mb-4">
                   {{ section.name }}
                 </h3>
                 <ol class="space-y-4">
@@ -145,35 +136,35 @@
                     :key="step.number"
                     class="flex gap-4"
                   >
-                    <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-yellow-400 text-black font-medium flex items-center justify-center text-sm">
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-sm">
                       {{ step.number }}
                     </span>
-                    <p class="text-gray-400 leading-relaxed pt-1 font-light">{{ step.step }}</p>
+                    <p class="text-gray-700 leading-relaxed pt-1">{{ step.step }}</p>
                   </li>
                 </ol>
               </div>
             </div>
 
             <!-- Fallback to plain instructions -->
-            <div v-else-if="recipe.instructions" class="text-gray-400 leading-relaxed prose prose-invert max-w-none font-light" v-html="recipe.instructions"></div>
+            <div v-else-if="recipe.instructions" class="text-gray-700 leading-relaxed" v-html="recipe.instructions"></div>
           </div>
 
           <!-- Nutrition (if available) -->
-          <div v-if="recipe.nutrition?.nutrients?.length" class="mb-8 pb-8 border-b border-gray-800/50">
-            <h2 class="text-2xl font-light text-white mb-4">Nutrition (per serving)</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div v-if="recipe.nutrition?.nutrients?.length" class="mb-8 pb-8 border-b">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Nutrition (per serving)</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               <div
                 v-for="nutrient in mainNutrients"
                 :key="nutrient.name"
-                class="bg-black border border-gray-800/50 rounded-lg p-4"
+                class="bg-gray-50 rounded-lg p-4 text-center"
               >
-                <div class="text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">
+                <div class="text-xs text-gray-600 uppercase mb-2">
                   {{ nutrient.name }}
                 </div>
-                <div class="text-2xl font-light text-yellow-400">
+                <div class="text-2xl font-bold text-primary-600">
                   {{ Math.round(nutrient.amount) }}
                 </div>
-                <div class="text-xs text-gray-600 font-mono">{{ nutrient.unit }}</div>
+                <div class="text-xs text-gray-500">{{ nutrient.unit }}</div>
               </div>
             </div>
           </div>
@@ -184,11 +175,11 @@
               :href="recipe.sourceUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 text-black font-medium rounded-lg hover:bg-yellow-300 transition-colors"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
             >
               View Original Recipe
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
               </svg>
             </a>
           </div>
@@ -274,24 +265,15 @@ onMounted(() => {
 
 <style scoped>
 .spinner {
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #eab308;
+  border: 4px solid #f3f4f6;
+  border-top-color: #f59e0b;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.prose :deep(a) {
-  color: #fbbf24;
-  text-decoration: underline;
-}
-
-.prose :deep(a:hover) {
-  color: #fcd34d;
 }
 </style>
