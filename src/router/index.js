@@ -7,7 +7,9 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 import FindRecipes from '../views/FindRecipes.vue'
+import RecipeDetail from '../views/RecipeDetail.vue'
 import CalorieTracker from '../views/CalorieTracker.vue'
+import PlanMeal from '../views/PlanMeal.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,9 +56,21 @@ const router = createRouter({
       meta: { requiresAuth: true } // keep it behind auth like /home
     },
     {
+      path: '/recipe/:id',
+      name: 'recipe-detail',
+      component: RecipeDetail,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/calorie-tracker',
       name: 'calorie-tracker',
       component: CalorieTracker,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/plan-meal',
+      name: 'plan-meal',
+      component: PlanMeal,
       meta: { requiresAuth: true }
     },
     {
