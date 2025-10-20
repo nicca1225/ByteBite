@@ -1,120 +1,133 @@
 <template>
-  <div class="calorie-tracker min-h-screen bg-gradient-to-br from-black to-gray-950 text-white p-4 sm:p-8">
+  <div class="calorie-tracker min-h-screen bg-black text-white p-4 sm:p-8">
     <div class="max-w-6xl mx-auto">
-      
+
       <!-- Back Button -->
-      <button 
-        class="text-yellow-400 hover:text-yellow-300 font-semibold mb-8 flex items-center space-x-2 transition-colors"
+      <button
+        class="text-gray-400 hover:text-yellow-400 font-mono uppercase tracking-wider text-sm mb-8 flex items-center gap-2 transition-colors"
         @click="$router.push('/')">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
         <span>Back to Dashboard</span>
       </button>
 
-      <div class="flex items-center justify-between mb-8 border-b border-yellow-400/20 pb-3">
-        <h1 class="text-4xl font-extrabold text-yellow-400">Daily Calorie Tracker 🔥</h1>
+      <div class="flex items-center justify-between mb-12">
+        <div>
+          <div class="inline-block mb-3">
+            <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/20">
+              Nutrition
+            </span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl font-light text-white">Daily Calorie Tracker</h1>
+        </div>
         <button
           @click="refreshEntries"
-          class="px-4 py-2 rounded-xl font-semibold border border-yellow-400 text-yellow-400 bg-gray-900 hover:bg-gray-800 transition disabled:opacity-50"
+          class="w-10 h-10 rounded-lg border border-gray-700 hover:border-yellow-400/50 text-gray-400 hover:text-yellow-400 flex items-center justify-center transition-colors disabled:opacity-50"
           :disabled="isLoadingEntries"
           title="Refresh entries"
         >
           <svg class="w-5 h-5" :class="{'animate-spin': isLoadingEntries}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
         </button>
       </div>
-      
+
       <!-- Error Message Placeholder -->
-      <div v-if="localError" class="bg-red-900/50 text-red-300 p-4 rounded-xl mb-6 border border-red-500">
+      <div v-if="localError" class="bg-red-900/20 text-red-300 p-4 rounded-xl mb-6 border border-red-500/30">
         {{ localError }}
       </div>
 
       <!-- Calorie Summary Card with Progress Bar -->
-      <div class="bg-gray-900 p-6 rounded-2xl shadow-xl border border-yellow-400/30 mb-10">
-        <h2 class="text-2xl font-bold text-white mb-6">Today's Progress</h2>
+      <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-light text-white">Today's Progress</h2>
+          <span class="text-sm font-mono text-gray-500 uppercase tracking-wider">{{ new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
+        </div>
         
         <!-- Progress Bar -->
-        <div class="h-6 bg-gray-700 rounded-full mb-4 overflow-hidden">
-            <div 
-                class="h-full transition-all duration-700 ease-out" 
-                :class="{'bg-red-600': caloriesRemaining < 0, 'bg-green-500': progressPercentage >= 100, 'bg-yellow-400': progressPercentage < 100}"
+        <div class="h-3 bg-gray-800/50 rounded-full mb-8 overflow-hidden">
+            <div
+                class="h-full transition-all duration-700 ease-out"
+                :class="{'bg-red-500': caloriesRemaining < 0, 'bg-green-500': progressPercentage >= 100, 'bg-yellow-400': progressPercentage < 100}"
                 :style="{ width: Math.min(progressPercentage, 100) + '%' }"
             ></div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-          
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
           <!-- Goal -->
-          <div class="p-6 bg-black rounded-xl border-2 border-gray-700 shadow-md">
-            <div class="text-xl font-medium text-gray-400">Daily Goal</div>
-            <div class="text-5xl font-extrabold text-white mt-2">{{ calorieGoal }}</div>
-            <div class="text-sm text-gray-500">kcal</div>
+          <div class="bg-black border border-gray-800/50 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-mono uppercase tracking-wider text-gray-500">Daily Goal</span>
+            </div>
+            <div class="text-4xl font-light text-white mb-2">{{ calorieGoal }}</div>
+            <div class="text-sm text-gray-600 font-mono">kcal</div>
           </div>
 
           <!-- Consumed -->
-          <div class="p-6 bg-black rounded-xl border-2 border-green-500/50 shadow-md">
-            <div class="text-xl font-medium text-gray-400">Consumed</div>
-            <div class="text-5xl font-extrabold text-green-400 mt-2">{{ todaysCalorieTotal }}</div>
-            <div class="text-sm text-gray-500">kcal</div>
+          <div class="bg-black border border-gray-800/50 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-mono uppercase tracking-wider text-gray-500">Consumed</span>
+            </div>
+            <div class="text-4xl font-light text-green-400 mb-2">{{ todaysCalorieTotal }}</div>
+            <div class="text-sm text-gray-600 font-mono">kcal</div>
           </div>
-          
+
           <!-- Remaining -->
-          <div 
-            :class="{'border-red-500/50': caloriesRemaining < 0, 'border-yellow-500/50': caloriesRemaining >= 0}"
-            class="p-6 bg-black rounded-xl border-2 shadow-md"
-          >
-            <div class="text-xl font-medium text-gray-400">Remaining</div>
-            <div class="text-5xl font-extrabold mt-2" :class="{'text-red-400': caloriesRemaining < 0, 'text-yellow-400': caloriesRemaining >= 0}">
+          <div class="bg-black border border-gray-800/50 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-mono uppercase tracking-wider text-gray-500">Remaining</span>
+            </div>
+            <div class="text-4xl font-light mb-2" :class="{'text-red-400': caloriesRemaining < 0, 'text-yellow-400': caloriesRemaining >= 0}">
               {{ caloriesRemaining }}
             </div>
-            <div class="text-sm text-gray-500">kcal</div>
+            <div class="text-sm text-gray-600 font-mono">kcal</div>
           </div>
         </div>
       </div>
 
       <!-- Log Meal Form & Recent Entries Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         <!-- Log Meal Form (2/3 width on large screens) -->
-        <div class="lg:col-span-2 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700/50 h-fit log-meal-form">
-          <h2 class="text-2xl font-bold text-white mb-6">{{ editingEntry ? 'Edit Entry' : 'Log New Entry' }}</h2>
-          <form @submit.prevent="handleSubmit" class="space-y-4">
-            
+        <div class="lg:col-span-2 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 h-fit log-meal-form">
+          <h2 class="text-2xl font-light text-white mb-6">{{ editingEntry ? 'Edit Entry' : 'Log New Entry' }}</h2>
+          <form @submit.prevent="handleSubmit" class="space-y-5">
+
             <div>
-              <label for="food" class="block text-sm font-medium text-gray-300 mb-1">Food/Meal Description</label>
-              <input 
-                id="food" 
-                type="text" 
+              <label for="food" class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Food/Meal Description</label>
+              <input
+                id="food"
+                type="text"
                 v-model="newEntry.food"
-                placeholder="e.g., Avocado Toast with Egg" 
+                placeholder="e.g., Avocado Toast with Egg"
                 required
-                class="w-full p-3 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-yellow-400 focus:border-yellow-400"
+                class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
               />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="calories" class="block text-sm font-medium text-gray-300 mb-1">Calories (kcal)</label>
-                <input 
-                  id="calories" 
-                  type="number" 
+                <label for="calories" class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Calories (kcal)</label>
+                <input
+                  id="calories"
+                  type="number"
                   v-model.number="newEntry.calories"
                   min="1"
                   placeholder="350"
                   required
-                  class="w-full p-3 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-yellow-400 focus:border-yellow-400"
+                  class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
                 />
               </div>
 
               <div>
-                <label for="mealType" class="block text-sm font-medium text-gray-300 mb-1">Meal Type</label>
-                <select 
-                  id="mealType" 
+                <label for="mealType" class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Meal Type</label>
+                <select
+                  id="mealType"
                   v-model="newEntry.mealType"
                   required
-                  class="w-full p-3 bg-black border border-gray-700 rounded-lg text-white focus:ring-yellow-400 focus:border-yellow-400 appearance-none"
+                  class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 appearance-none transition-colors"
                 >
                   <option value="" disabled>Select Type</option>
                   <option value="Breakfast">Breakfast</option>
@@ -125,63 +138,63 @@
               </div>
             </div>
 
-            <div class="flex space-x-4 mt-4">
-                <button 
+            <div class="flex gap-3 pt-2">
+                <button
                   type="submit"
-                  class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-black font-extrabold py-3 rounded-xl transition-colors duration-300 shadow-md flex items-center justify-center space-x-2"
+                  class="flex-1 bg-yellow-400 hover:bg-yellow-300 text-black font-medium py-3 rounded-lg transition-colors flex items-center justify-center"
                 >
-                  {{ editingEntry ? 'Update Meal' : 'Log Meal' }}
+                  {{ editingEntry ? 'Update Entry' : 'Log Entry' }}
                 </button>
 
                 <!-- Cancel Edit Button -->
-                <button 
+                <button
                     v-if="editingEntry"
                     type="button"
                     @click="cancelEdit"
-                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-xl transition-colors duration-300 shadow-md flex items-center justify-center space-x-2"
+                    class="flex-1 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center"
                 >
-                    Cancel Edit
+                    Cancel
                 </button>
             </div>
           </form>
         </div>
 
         <!-- Recent Entries List (1/3 width on large screens) -->
-        <div class="lg:col-span-1 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700/50">
-          <h2 class="text-2xl font-bold text-white mb-6">Recent Entries</h2>
-          
+        <div class="lg:col-span-1 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6">
+          <h2 class="text-2xl font-light text-white mb-6">Recent Entries</h2>
+
           <div v-if="isLoadingEntries" class="text-center text-gray-500 py-10">
             <svg class="animate-spin h-8 w-8 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="mt-2">Loading entries...</p>
+            <p class="mt-2 text-sm font-mono">Loading entries...</p>
           </div>
 
-          <ul v-else-if="dailyEntries.length > 0" class="space-y-4">
-            <li 
-              v-for="entry in dailyEntries" 
+          <ul v-else-if="dailyEntries.length > 0" class="space-y-3">
+            <li
+              v-for="entry in dailyEntries"
               :key="entry.id"
-              class="flex justify-between items-center p-3 bg-black rounded-lg border border-gray-700 group hover:border-yellow-400 transition-colors"
+              class="flex justify-between items-start p-4 bg-black border border-gray-800/50 rounded-lg group hover:border-yellow-400/30 transition-colors"
             >
-              <div class="flex flex-col truncate">
-                <span class="font-semibold text-white truncate">{{ entry.food }}</span>
-                <span class="text-xs text-gray-500">{{ formatTimestamp(entry.timestamp) }} &bull; {{ entry.mealType }}</span>
+              <div class="flex flex-col truncate flex-1">
+                <span class="font-medium text-white truncate mb-1">{{ entry.food }}</span>
+                <span class="text-xs text-gray-500 font-mono">{{ formatTimestamp(entry.timestamp) }} • {{ entry.mealType }}</span>
               </div>
-              <div class="flex items-center flex-shrink-0 ml-4">
-                  <span class="font-bold text-yellow-400">{{ entry.calories }} kcal</span>
-                  
+              <div class="flex items-center flex-shrink-0 ml-4 gap-2">
+                  <span class="font-mono text-sm text-yellow-400">{{ entry.calories }}</span>
+
                   <!-- Edit Button (Interaction) -->
-                  <button @click="editEntry(entry)" title="Edit" class="ml-2 p-1 text-gray-500 hover:text-blue-400 transition-colors">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-9-3l9-9m-9 9l4 4"></path>
+                  <button @click="editEntry(entry)" title="Edit" class="p-1.5 text-gray-600 hover:text-yellow-400 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-9-3l9-9m-9 9l4 4"></path>
                       </svg>
                   </button>
 
                   <!-- Delete Button (Interaction) -->
-                  <button @click="deleteEntry(entry.id)" title="Delete" class="ml-1 p-1 text-gray-500 hover:text-red-400 transition-colors">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  <button @click="deleteEntry(entry.id)" title="Delete" class="p-1.5 text-gray-600 hover:text-red-400 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                       </svg>
                   </button>
               </div>
@@ -189,7 +202,8 @@
           </ul>
 
           <div v-else class="text-center text-gray-500 py-10">
-            No meals logged today! Time to start tracking.
+            <div class="text-sm font-light">No meals logged today</div>
+            <div class="text-xs text-gray-600 mt-1">Start tracking your nutrition</div>
           </div>
         </div>
       </div>
