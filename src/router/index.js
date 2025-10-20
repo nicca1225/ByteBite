@@ -58,6 +58,12 @@ const router = createRouter({
       name: 'calorie-tracker',
       component: CalorieTracker,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/shopping-list',
+      name: 'ShoppingList',
+      component: () => import('../views/ShoppingList.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

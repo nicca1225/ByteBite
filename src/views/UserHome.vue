@@ -53,7 +53,10 @@
             <p class="text-gray-300 text-sm">Discover new meal ideas</p>
           </button>
 
-          <button class="group bg-gray-900 hover:bg-black p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-400/30 hover:border-yellow-400 text-left">
+          <button 
+            class="group bg-gray-900 hover:bg-black p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-400/30 hover:border-yellow-400 text-left"
+            @click="$router.push('/shopping-list')"
+          >
             <div class="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-300 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <span class="text-3xl">🛒</span>
             </div>

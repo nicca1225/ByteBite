@@ -1,8 +1,158 @@
 <!-- src/views/FindRecipes.vue -->
 <template>
   <main class="min-h-screen">
+    <!-- RECIPE DETAIL VIEW -->
+    <section v-if="selectedRecipe" class="px-4 py-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Back Button -->
+        <button 
+          @click="selectedRecipe = null"
+          class="mb-6 flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Back to Search Results
+        </button>
+
+        <!-- Recipe Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Column: Ingredients & Equipment -->
+          <div class="lg:col-span-1 space-y-6">
+            <!-- Ingredients -->
+            <div class="bg-black rounded-2xl border border-gray-800 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white">Ingredients</h2>
+                <button 
+                  @click="addToShoppingList"
+                  class="px-1 py-1 bg-yellow-500 text-black text-sm font-semibold rounded hover:bg-yellow-400"
+                >
+                  + Shopping List
+                </button>
+              </div>
+              <ul class="space-y-3">
+                <li v-for="ingredient in selectedRecipe.extendedIngredients" :key="ingredient.id" 
+                    class="text-gray-300 text-sm">
+                  <span class="font-medium">{{ ingredient.amount }} {{ ingredient.unit }}</span>
+                  {{ ingredient.name }}
+                </li>
+              </ul>
+              <!-- Only show total cost if available -->
+              <div v-if="selectedRecipe.pricePerServing && selectedRecipe.pricePerServing > 0" 
+                  class="mt-4 pt-4 border-t border-gray-700">
+                <p class="text-sm text-gray-300">
+                  <strong class="text-yellow-400">Total Recipe Cost:</strong> 
+                  ${{ (selectedRecipe.pricePerServing * selectedRecipe.servings / 100).toFixed(2) }}
+                </p>
+                <p class="text-sm text-gray-300">
+                  <strong class="text-yellow-400">Cost Per Serving:</strong> 
+                  ${{ (selectedRecipe.pricePerServing / 100).toFixed(2) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Equipment -->
+            <div v-if="selectedRecipe.equipment && selectedRecipe.equipment.length > 0" 
+                class="bg-black rounded-2xl border border-gray-800 p-6">
+              <h2 class="text-xl font-bold text-white mb-4">Equipment Needed</h2>
+              <ul class="space-y-2">
+                <li v-for="equip in selectedRecipe.equipment" :key="equip.id" 
+                    class="flex items-center gap-3 text-gray-300">
+                  <span class="text-sm">{{ equip.name }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Nutrition Facts -->
+            <div v-if="selectedRecipe.nutrition?.nutrients" 
+                class="bg-black rounded-2xl border border-gray-800 p-6">
+              <h2 class="text-xl font-bold text-white mb-4">Nutrition Facts</h2>
+              <div class="space-y-2">
+                <div v-for="nutrient in selectedRecipe.nutrition.nutrients.slice(0, 10)" 
+                    :key="nutrient.name" 
+                    class="flex justify-between items-center text-sm">
+                  <span class="text-gray-300">{{ nutrient.name }}</span>
+                  <span class="text-yellow-400 font-medium">
+                    {{ Math.round(nutrient.amount) }}{{ nutrient.unit }}
+                  </span>
+                </div>
+              </div>
+              <div v-if="selectedRecipe.nutrition.caloricBreakdown" class="mt-4 pt-4 border-t border-gray-700">
+                <h3 class="text-white font-semibold mb-2">Caloric Breakdown</h3>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <div class="text-center">
+                    <div class="text-yellow-400 font-bold">{{ Math.round(selectedRecipe.nutrition.caloricBreakdown.percentCarbs) }}%</div>
+                    <div class="text-gray-400">Carbs</div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-yellow-400 font-bold">{{ Math.round(selectedRecipe.nutrition.caloricBreakdown.percentFat) }}%</div>
+                    <div class="text-gray-400">Fat</div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-yellow-400 font-bold">{{ Math.round(selectedRecipe.nutrition.caloricBreakdown.percentProtein) }}%</div>
+                    <div class="text-gray-400">Protein</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Instructions & Summary -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Recipe Header -->
+            <div class="bg-black rounded-2xl border border-gray-800 overflow-hidden">
+              <img :src="selectedRecipe.image" :alt="selectedRecipe.title" class="w-full h-64 object-cover" />
+              <div class="p-6">
+                <h1 class="text-3xl font-bold text-white mb-4">{{ selectedRecipe.title }}</h1>
+                <div class="flex items-center gap-4 text-sm text-gray-300">
+                  <span>⏱️ {{ selectedRecipe.readyInMinutes }} min</span>
+                  <span>🍽️ {{ selectedRecipe.servings }} servings</span>
+                  <span v-if="selectedRecipe.healthScore">💚 Health Score: {{ selectedRecipe.healthScore }}/100</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instructions -->
+            <div v-if="selectedRecipe.analyzedInstructions?.[0]?.steps" 
+                class="bg-black rounded-2xl border border-gray-800 p-6">
+              <h2 class="text-xl font-bold text-white mb-4">Instructions</h2>
+              <div class="space-y-4">
+                <div v-for="step in selectedRecipe.analyzedInstructions[0].steps" :key="step.number" 
+                    class="flex gap-4">
+                  <span class="flex-shrink-0 w-8 h-8 bg-yellow-500 text-black rounded-full flex items-center justify-center text-sm font-bold">
+                    {{ step.number }}
+                  </span>
+                  <div class="flex-1">
+                    <p class="text-gray-300 mb-2">{{ step.step }}</p>
+                    <!-- Equipment for this step -->
+                    <div v-if="step.equipment && step.equipment.length > 0" class="flex items-center gap-2 mt-2">
+                      <span class="text-xs text-gray-500">Equipment:</span>
+                      <div class="flex gap-2">
+                        <span v-for="equip in step.equipment" :key="equip.id" 
+                              class="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">
+                          {{ equip.name }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recipe Summary -->
+            <div v-if="selectedRecipe.summary" class="bg-black rounded-2xl border border-gray-800 p-6">
+              <h2 class="text-xl font-bold text-white mb-4">About This Recipe</h2>
+              <div class="text-gray-300 text-sm leading-relaxed" 
+                  v-html="selectedRecipe.summary.replace(/<[^>]*>/g, '')">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- INITIAL (centered) -->
-    <section v-if="!hasSearched" class="min-h-[60vh] flex items-center justify-center px-4">
+    <section v-else-if="!hasSearched" class="min-h-[60vh] flex items-center justify-center px-4">
       <div class="w-full max-w-2xl">
         <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6">Find Recipes</h1>
 
@@ -79,11 +229,13 @@
       <span v-if="typeof r.aggregateLikes === 'number'">👍 {{ r.aggregateLikes }}</span>
     </div>
     <div class="mt-auto pt-4 flex gap-2">
-      <a
-        :href="`https://spoonacular.com/recipes/${encodeURIComponent(r.title)}-${r.id}`"
-        target="_blank"
+      <button
+        @click="viewRecipe(r.id)"
         class="flex-1 text-center rounded-lg px-4 py-2 bg-yellow-500 text-black font-semibold hover:bg-yellow-400"
-      >View</a>
+      >
+        View Recipe
+      </button>
+
     </div>
   </div>
 </article>
@@ -104,6 +256,7 @@ const loading = ref(false)
 const error = ref('')
 const searched = ref(false)
 const hasSearched = ref(false)
+const selectedRecipe = ref(null)
 
 async function onSearch() {
   error.value = ''
@@ -170,4 +323,122 @@ function refreshResults() {
     onSearch()
   }
 }
+
+async function viewRecipe(recipeId) {
+  if (!apiKey) return
+  
+  loading.value = true
+  try {
+    // Fetch detailed recipe information with nutrition and equipment
+    const recipeUrl = `https://api.spoonacular.com/recipes/${recipeId}/information?apiKey=${apiKey}&includeNutrition=true`
+    const recipeRes = await fetch(recipeUrl)
+    if (!recipeRes.ok) throw new Error(`Failed to fetch recipe details`)
+    
+    const recipe = await recipeRes.json()
+    
+    // Extract equipment from instructions
+    const equipment = new Map()
+    if (recipe.analyzedInstructions?.[0]?.steps) {
+      recipe.analyzedInstructions[0].steps.forEach(step => {
+        if (step.equipment) {
+          step.equipment.forEach(equip => {
+            equipment.set(equip.id, equip)
+          })
+        }
+      })
+    }
+    
+    // Add equipment array to recipe
+    recipe.equipment = Array.from(equipment.values())
+    
+    // Try to get ingredient prices (this might not always be available)
+    try {
+      const ingredientIds = recipe.extendedIngredients?.map(ing => ing.id).join(',')
+      if (ingredientIds) {
+        const priceUrl = `https://api.spoonacular.com/food/ingredients/${ingredientIds}/information?apiKey=${apiKey}&amount=1&unit=serving`
+        // Note: Individual ingredient pricing requires a more complex API call structure
+        // For now, we'll use the recipe's overall price information
+      }
+    } catch (e) {
+      console.log('Could not fetch ingredient prices:', e)
+    }
+    
+    selectedRecipe.value = recipe
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    console.log('Recipe data:', recipe) // For debugging
+  } catch (e) {
+    console.error('Error fetching recipe details:', e)
+    error.value = 'Failed to load recipe details.'
+  } finally {
+    loading.value = false
+  }
+}
+
+
+function addToShoppingList() {
+  if (!selectedRecipe.value?.extendedIngredients) return
+  
+  const existingList = JSON.parse(localStorage.getItem('shoppingList') || '[]')
+  
+  // Calculate individual ingredient prices from the total recipe cost
+  const totalRecipeCost = selectedRecipe.value.pricePerServing ? 
+    (selectedRecipe.value.pricePerServing * selectedRecipe.value.servings / 100) : 0
+  
+  const totalIngredients = selectedRecipe.value.extendedIngredients.length
+  
+  const newItems = selectedRecipe.value.extendedIngredients.map(ingredient => {
+    // Use Spoonacular's individual ingredient cost if available
+    let ingredientPrice = 0
+    
+    if (ingredient.estimatedCost && ingredient.estimatedCost.value) {
+      // If individual ingredient cost is available from Spoonacular
+      ingredientPrice = ingredient.estimatedCost.value / 100
+    } else if (totalRecipeCost > 0 && totalIngredients > 0) {
+      // Distribute total recipe cost proportionally among ingredients
+      // This is a simple approximation - more expensive ingredients would get more cost
+      let weightFactor = 1
+      const name = ingredient.name.toLowerCase()
+      
+      // Give higher weight to more expensive ingredients
+      if (name.includes('chicken') || name.includes('beef') || name.includes('pork') || name.includes('fish')) {
+        weightFactor = 3
+      } else if (name.includes('cheese') || name.includes('cream')) {
+        weightFactor = 2
+      } else if (name.includes('salt') || name.includes('pepper') || name.includes('spice')) {
+        weightFactor = 0.1
+      }
+      
+      ingredientPrice = (totalRecipeCost / totalIngredients) * weightFactor
+    }
+    
+    return {
+      id: Date.now() + Math.random(),
+      name: ingredient.name,
+      amount: ingredient.amount || 1,
+      unit: ingredient.unit || '',
+      recipe: selectedRecipe.value.title,
+      spoonacularPrice: ingredientPrice, // Use Spoonacular-based pricing
+      purchased: false
+    }
+  })
+  
+  const updatedList = [...existingList, ...newItems]
+  localStorage.setItem('shoppingList', JSON.stringify(updatedList))
+  
+  const totalEstimated = newItems.reduce((sum, item) => sum + (item.spoonacularPrice || 0), 0)
+  
+  let message = `Added ${newItems.length} ingredients to shopping list!`
+  if (totalEstimated > 0) {
+    message += ` Estimated cost: $${totalEstimated.toFixed(2)}`
+  }
+  if (totalRecipeCost > 0) {
+    message += ` (Recipe total: $${totalRecipeCost.toFixed(2)})`
+  }
+  
+  alert(message)
+}
+
+
+
+
 </script>
