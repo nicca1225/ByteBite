@@ -56,7 +56,7 @@ const router = createRouter({
       meta: { requiresAuth: true } // keep it behind auth like /home
     },
     {
-      path: '/recipe/:id',
+      path: '/recipe-detail/:id',
       name: 'recipe-detail',
       component: RecipeDetail,
       meta: { requiresAuth: true }
