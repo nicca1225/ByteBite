@@ -22,8 +22,18 @@
         <p class="text-gray-400 font-light">Click on any day to plan your meals</p>
       </div>
 
+      <!-- Error Message -->
+      <div v-if="error" class="bg-red-900/20 text-red-300 p-4 rounded-xl mb-6 border border-red-500/30">
+        {{ error }}
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex justify-center py-20">
+        <div class="w-12 h-12 border-4 border-gray-800 border-t-yellow-400 rounded-full animate-spin" aria-label="Loading"></div>
+      </div>
+
       <!-- Calendar -->
-      <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl overflow-hidden">
+      <div v-if="!isLoading" class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl overflow-hidden">
         <!-- Month Navigation -->
         <div class="flex items-center justify-between p-6 pb-4">
           <div class="flex items-center gap-3">
@@ -267,24 +277,25 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import {
+  loadUserMealPlans,
+  addMealPlan,
+  updateMealPlan,
+  deleteMealPlan,
+} from '@/utils/firestoreUtils'
+
+// Auth store
+const authStore = useAuthStore()
 
 // Current month/year
 const currentMonth = ref(new Date().getMonth())
 const currentYear = ref(new Date().getFullYear())
 
-// Load meals from localStorage
-const loadMeals = () => {
-  const saved = localStorage.getItem('mealPlans')
-  return saved ? JSON.parse(saved) : []
-}
-
 // Meals data
-const meals = ref(loadMeals())
-
-// Save meals to localStorage whenever they change
-watch(meals, (newMeals) => {
-  localStorage.setItem('mealPlans', JSON.stringify(newMeals))
-}, { deep: true })
+const meals = ref([])
+const isLoading = ref(false)
+const error = ref(null)
 
 // Dialog state
 const showDayDetail = ref(false)
@@ -373,6 +384,29 @@ function getMealsForDay(date) {
   return meals.value.filter(meal => meal.date === date)
 }
 
+// Load meals from Firebase
+async function loadMealsFromFirebase() {
+  if (!authStore.user) {
+    console.log('⏭️ No user logged in, skipping meal load')
+    return
+  }
+
+  try {
+    isLoading.value = true
+    error.value = null
+    console.log('📦 Loading meals from Firebase...')
+
+    const loadedMeals = await loadUserMealPlans(authStore.user.email)
+    meals.value = loadedMeals
+    console.log('✅ Meals loaded:', loadedMeals.length)
+  } catch (err) {
+    console.error('❌ Error loading meals:', err)
+    error.value = 'Failed to load meal plans. Please refresh the page.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // Navigation
 function previousMonth() {
   if (currentMonth.value === 0) {
@@ -424,23 +458,70 @@ function closeAddMealDialog() {
   }
 }
 
-function addMeal() {
+async function addMeal() {
   if (!selectedDay.value || !newMeal.value.name) return
-
-  const meal = {
-    id: Date.now(),
-    date: selectedDay.value.date,
-    type: newMeal.value.type,
-    name: newMeal.value.name,
-    calories: newMeal.value.calories,
-    time: newMeal.value.time
+  if (!authStore.user) {
+    error.value = 'Please log in to add meal plans'
+    return
   }
 
-  meals.value.push(meal)
+  try {
+    error.value = null
+    console.log('📝 Adding meal:', newMeal.value)
+
+    // Add to Firebase
+    const mealId = await addMealPlan(authStore.user.email, {
+      date: selectedDay.value.date,
+      type: newMeal.value.type,
+      name: newMeal.value.name,
+      calories: newMeal.value.calories,
+      time: newMeal.value.time,
+    })
+
+    // Add to local array
+    const meal = {
+      id: mealId,
+      date: selectedDay.value.date,
+      type: newMeal.value.type,
+      name: newMeal.value.name,
+      calories: newMeal.value.calories,
+      time: newMeal.value.time,
+    }
+
+    meals.value.push(meal)
+    console.log('✅ Meal added successfully')
+  } catch (err) {
+    console.error('❌ Error adding meal:', err)
+    error.value = 'Failed to add meal. Please try again.'
+  }
+
   closeAddMealDialog()
 }
 
-function removeMeal(mealId) {
-  meals.value = meals.value.filter(meal => meal.id !== mealId)
+async function removeMeal(mealId) {
+  if (!authStore.user) {
+    error.value = 'Please log in to remove meal plans'
+    return
+  }
+
+  try {
+    error.value = null
+    console.log('🗑️ Removing meal:', mealId)
+
+    // Delete from Firebase
+    await deleteMealPlan(authStore.user.email, mealId)
+
+    // Remove from local array
+    meals.value = meals.value.filter(meal => meal.id !== mealId)
+    console.log('✅ Meal removed successfully')
+  } catch (err) {
+    console.error('❌ Error removing meal:', err)
+    error.value = 'Failed to remove meal. Please try again.'
+  }
 }
+
+// Lifecycle hook
+onMounted(() => {
+  loadMealsFromFirebase()
+})
 </script>

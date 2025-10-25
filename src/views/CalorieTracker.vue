@@ -214,18 +214,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { db } from '@/config/firebase';
 import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  getDocs,
-  Timestamp
-} from 'firebase/firestore';
+  loadTodaysCalorieEntries,
+  addCalorieEntry,
+  updateCalorieEntry,
+  deleteCalorieEntry,
+} from '@/utils/firestoreUtils';
 
 // --- AUTH ---
 const authStore = useAuthStore();
@@ -272,48 +266,13 @@ async function loadTodaysEntries() {
     return;
   }
 
-  console.log('✅ User authenticated:', authStore.user.uid);
-
   try {
     isLoadingEntries.value = true;
-
-    // Get start of today (midnight)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
-    console.log('📅 Today timestamp:', new Date(todayTimestamp).toLocaleString());
-
-    // Query entries for current user only
-    const entriesRef = collection(db, 'calorieEntries');
-    console.log('📦 Firestore collection reference created');
-
-    const q = query(
-      entriesRef,
-      where('userId', '==', authStore.user.uid)
-    );
-    console.log('🔍 Query created for userId:', authStore.user.uid);
-
-    const querySnapshot = await getDocs(q);
-    console.log('📊 Query completed. Documents found:', querySnapshot.size);
-
-    // Filter and sort on client side
-    const allEntries = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: doc.data().timestamp?.toMillis() || Date.now()
-    }));
-
-    console.log('📝 All entries from Firestore:', allEntries);
-
-    dailyEntries.value = allEntries
-      .filter(entry => entry.timestamp >= todayTimestamp)
-      .sort((a, b) => b.timestamp - a.timestamp);
-
+    const entries = await loadTodaysCalorieEntries(authStore.user.email);
+    dailyEntries.value = entries;
     console.log('✅ Today\'s entries loaded:', dailyEntries.value.length);
-
   } catch (error) {
     console.error('❌ Error loading entries:', error);
-    console.error('Error details:', error.message);
     localError.value = "Failed to load entries. Please try again.";
   } finally {
     isLoadingEntries.value = false;
@@ -330,8 +289,6 @@ async function handleSubmit() { // Handles both logging and updating
     return;
   }
 
-  console.log('✅ User:', authStore.user.uid);
-
   if (!newEntry.value.food || !newEntry.value.calories || !newEntry.value.mealType) {
     console.error('❌ Missing fields');
     localError.value = "Please fill out all fields.";
@@ -342,17 +299,13 @@ async function handleSubmit() { // Handles both logging and updating
     food: newEntry.value.food,
     calories: parseInt(newEntry.value.calories),
     mealType: newEntry.value.mealType,
-    userId: authStore.user.uid,
   };
-
-  console.log('📝 Entry data to save:', entryData);
 
   try {
     if (editingEntry.value) {
-      // 1. UPDATE LOGIC
+      // UPDATE LOGIC
       console.log('✏️ Updating entry:', editingEntry.value.id);
-      const entryRef = doc(db, 'calorieEntries', editingEntry.value.id);
-      await updateDoc(entryRef, entryData);
+      await updateCalorieEntry(authStore.user.email, editingEntry.value.id, entryData);
       console.log('✅ Entry updated successfully');
 
       // Update local array
@@ -363,25 +316,18 @@ async function handleSubmit() { // Handles both logging and updating
           ...entryData,
         };
       }
-      editingEntry.value = null; // Exit edit mode
+      editingEntry.value = null;
 
     } else {
-      // 2. NEW ENTRY LOGIC (Creation)
-      const entryToSave = {
-        ...entryData,
-        timestamp: Timestamp.now(),
-      };
-
+      // NEW ENTRY LOGIC
       console.log('➕ Creating new entry...');
-
-      // Save to Firebase
-      const docRef = await addDoc(collection(db, 'calorieEntries'), entryToSave);
-      console.log('✅ Entry saved to Firestore with ID:', docRef.id);
+      const docId = await addCalorieEntry(authStore.user.email, entryData);
+      console.log('✅ Entry saved with ID:', docId);
 
       // Add the new entry to the front of the list (newest first)
       dailyEntries.value.unshift({
-        id: docRef.id,
-        ...entryToSave,
+        id: docId,
+        ...entryData,
         timestamp: Date.now(),
       });
 
@@ -397,8 +343,6 @@ async function handleSubmit() { // Handles both logging and updating
 
   } catch (error) {
     console.error('❌ Error saving entry:', error);
-    console.error('Error code:', error.code);
-    console.error('Error message:', error.message);
     localError.value = "Failed to save entry. Please try again.";
   }
 }
@@ -435,7 +379,7 @@ async function deleteEntry(id) {
 
     try {
       // Delete from Firebase
-      await deleteDoc(doc(db, 'calorieEntries', id));
+      await deleteCalorieEntry(authStore.user.email, id);
       console.log('✅ Entry deleted from Firestore');
 
       // Remove from local array
@@ -444,8 +388,6 @@ async function deleteEntry(id) {
 
     } catch (error) {
       console.error('❌ Error deleting entry:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
       localError.value = "Failed to delete entry. Please try again.";
     }
 }

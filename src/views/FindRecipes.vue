@@ -49,42 +49,44 @@
 <div
   v-show="filtersOpen"
   id="filters-initial"
-  class="mt-3 bg-black/70 border border-gray-800 rounded-xl p-4"
+  class="mt-3 bg-gradient-to-br from-gray-900/50 to-black/50 border border-gray-800/50 rounded-xl p-6 backdrop-blur-sm"
 >
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     <!-- Calories -->
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Min Calories</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Min Calories</label>
       <input type="number" min="0" v-model.number="minCalories"
-             class="form-input w-full text-black placeholder-gray-400" />
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+             placeholder="0" />
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Max Calories</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Max Calories</label>
       <input type="number" min="0" v-model.number="maxCalories"
-             class="form-input w-full text-black placeholder-gray-400" />
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+             placeholder="9999" />
     </div>
 
     <!-- Ingredients -->
     <div class="md:col-span-2">
-      <label class="block text-xs text-gray-400 mb-1">Include Ingredients (comma-separated)</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Include Ingredients (comma-separated)</label>
       <input v-model.trim="includeIngredients" placeholder="e.g. chicken, rice"
-             class="form-input w-full text-black placeholder-gray-400" />
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" />
     </div>
 
     <!-- Diet / Intolerances / Type -->
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Diet</label>
-      <select v-model="diet" class="form-input w-full text-black">
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Diet</label>
+      <select v-model="diet" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="">(Any)</option>
         <option>vegetarian</option><option>vegan</option>
         <option>paleo</option><option>ketogenic</option><option>whole30</option>
       </select>
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Allergies</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Allergies</label>
       <!-- <input v-model.trim="intolerances" placeholder="e.g. gluten, dairy, peanut"
-             class="form-input w-full text-black placeholder-gray-400" /> -->
-      <select v-model="intolerances" class="form-input w-full text-black">
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" /> -->
+      <select v-model="intolerances" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="">(Any)</option>
         <option value="Dairy">Dairy</option>
         <option value="Peanut">Peanut</option>
@@ -101,8 +103,8 @@
       </select>
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Type</label>
-      <select v-model="type" class="form-input w-full text-black">
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Type</label>
+      <select v-model="type" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="">(Any)</option>
         <option value="main course">main course</option>
         <option value="side dish">side dish</option>
@@ -180,42 +182,44 @@
 <div
   v-show="filtersOpen"
   id="filters-sticky"
-  class="max-w-6xl mx-auto mt-3 bg-black/70 border border-gray-800 rounded-xl p-4"
+  class="max-w-6xl mx-auto mt-3 bg-gradient-to-br from-gray-900/50 to-black/50 border border-gray-800/50 rounded-xl p-6 backdrop-blur-sm"
 >
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     <!-- Calories -->
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Min Calories</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Min Calories</label>
       <input type="number" min="0" v-model.number="minCalories"
-             class="form-input w-full text-black placeholder-gray-400" />
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+             placeholder="0" />
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Max Calories</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Max Calories</label>
       <input type="number" min="0" v-model.number="maxCalories"
-             class="form-input w-full text-black placeholder-gray-400" />
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+             placeholder="9999" />
     </div>
 
     <!-- Ingredients -->
     <div class="md:col-span-2">
-      <label class="block text-xs text-gray-400 mb-1">Include Ingredients (comma-separated)</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Include Ingredients (comma-separated)</label>
       <input v-model.trim="includeIngredients" placeholder="e.g. chicken, rice"
-             class="form-input w-full text-black placeholder-gray-400" />
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" />
     </div>
 
     <!-- Diet / Intolerances / Type -->
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Diet</label>
-      <select v-model="diet" class="form-input w-full text-black">
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Diet</label>
+      <select v-model="diet" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="">(Any)</option>
         <option>vegetarian</option><option>vegan</option>
         <option>paleo</option><option>ketogenic</option><option>whole30</option>
       </select>
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Allergies</label>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Allergies</label>
       <!-- <input v-model.trim="intolerances" placeholder="e.g. gluten, dairy, peanut"
-             class="form-input w-full text-black placeholder-gray-400" /> -->
-      <select v-model="intolerances" class="form-input w-full text-black">
+             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" /> -->
+      <select v-model="intolerances" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="">(Any)</option>
         <option value="Dairy">Dairy</option>
         <option value="Peanut">Peanut</option>
@@ -232,8 +236,8 @@
       </select>
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Type</label>
-      <select v-model="type" class="form-input w-full text-black">
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Type</label>
+      <select v-model="type" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="">(Any)</option>
         <option value="main course">main course</option>
         <option value="side dish">side dish</option>
