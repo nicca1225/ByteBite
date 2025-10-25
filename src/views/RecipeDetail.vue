@@ -1,190 +1,144 @@
-<!-- src/views/RecipeDetail.vue -->
+<!-- src/views/RecipeDetails.vue -->
 <template>
-  <main class="min-h-screen bg-gray-50 px-4 py-8">
-    <div class="max-w-5xl mx-auto">
-      <!-- Back Button -->
+  <main class="min-h-screen bg-black px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Back -->
       <button
         @click="goBack"
-        class="mb-6 text-primary-600 hover:text-primary-700 font-semibold flex items-center gap-2 transition-colors"
+        class="mb-6 flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors font-mono uppercase tracking-wider text-sm"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Search
+        Back to Search Results
       </button>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-20">
-        <div class="spinner" aria-label="Loading recipe details"></div>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <div v-if="error" class="bg-red-900/20 border border-red-500/30 text-red-300 p-4 rounded-xl mb-6 text-sm font-light">
         {{ error }}
       </div>
+      <div v-if="loading" class="flex justify-center py-20">
+        <div class="w-12 h-12 border-4 border-gray-800 border-t-yellow-400 rounded-full animate-spin"></div>
+      </div>
 
-      <!-- Recipe Content -->
-      <article v-else-if="recipe" class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <!-- Hero Image -->
-        <div class="relative h-64 sm:h-96">
-          <img
-            :src="recipe.image"
-            :alt="recipe.title"
-            class="w-full h-full object-cover"
-          />
-        </div>
-
-        <!-- Recipe Info -->
-        <div class="p-6 sm:p-8">
-          <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            {{ recipe.title }}
-          </h1>
-
-          <!-- Quick Stats -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 pb-8 border-b">
-            <div class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Time</div>
-              <div class="text-2xl font-bold text-primary-600">{{ recipe.readyInMinutes }}</div>
-              <div class="text-xs text-gray-500">minutes</div>
-            </div>
-            <div v-if="recipe.servings" class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Servings</div>
-              <div class="text-2xl font-bold text-primary-600">{{ recipe.servings }}</div>
-              <div class="text-xs text-gray-500">portions</div>
-            </div>
-            <div v-if="recipe.aggregateLikes" class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Likes</div>
-              <div class="text-2xl font-bold text-primary-600">{{ recipe.aggregateLikes }}</div>
-              <div class="text-xs text-gray-500">total</div>
-            </div>
-            <div v-if="recipe.healthScore" class="text-center">
-              <div class="text-sm text-gray-600 mb-1">Health Score</div>
-              <div class="text-2xl font-bold text-primary-600">{{ recipe.healthScore }}</div>
-              <div class="text-xs text-gray-500">out of 100</div>
-            </div>
-          </div>
-
-          <!-- Diet & Health Info -->
-          <div v-if="recipe.diets?.length || recipe.dishTypes?.length" class="mb-8 pb-8 border-b">
-            <div v-if="recipe.diets?.length" class="mb-4">
-              <h3 class="text-sm font-semibold text-gray-600 uppercase mb-3">Diets</h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="diet in recipe.diets"
-                  :key="diet"
-                  class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
-                >
-                  {{ diet }}
-                </span>
-              </div>
-            </div>
-            <div v-if="recipe.dishTypes?.length">
-              <h3 class="text-sm font-semibold text-gray-600 uppercase mb-3">Dish Types</h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="type in recipe.dishTypes"
-                  :key="type"
-                  class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                >
-                  {{ type }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Summary -->
-          <div v-if="recipe.summary" class="mb-8 pb-8 border-b">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">About This Recipe</h2>
-            <div
-              class="text-gray-700 leading-relaxed"
-              v-html="recipe.summary"
-            ></div>
-          </div>
-
+      <section v-if="recipe" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left: Ingredients / Equipment / Nutrition -->
+        <aside class="lg:col-span-1 space-y-6">
           <!-- Ingredients -->
-          <div v-if="recipe.extendedIngredients?.length" class="mb-8 pb-8 border-b">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
-            <ul class="space-y-2">
-              <li
-                v-for="ingredient in recipe.extendedIngredients"
-                :key="ingredient.id"
-                class="flex items-start gap-3 text-gray-700"
+          <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-light text-white">Ingredients</h2>
+              <button
+                @click="addToShoppingList"
+                class="px-3 py-2 bg-yellow-400 text-black text-sm font-medium rounded-lg hover:bg-yellow-300 transition-colors"
               >
-                <span class="text-primary-600 mt-1">•</span>
-                <span>{{ ingredient.original }}</span>
+                + Shopping List
+              </button>
+            </div>
+            <ul class="space-y-3">
+              <li v-for="ing in recipe.extendedIngredients" :key="ing.id"
+                  class="text-gray-400 text-sm font-light flex items-start gap-2">
+                <span class="text-yellow-400 mt-1 text-xs">▸</span>
+                <span>
+                  <span class="font-medium text-gray-300">{{ ing.amount }} {{ ing.unit }}</span>
+                  {{ ing.name }}
+                </span>
+              </li>
+            </ul>
+            <div v-if="recipe.pricePerServing && recipe.pricePerServing > 0" class="mt-4 pt-4 border-t border-gray-800/50">
+              <p class="text-sm text-gray-400 font-light">
+                <strong class="text-yellow-400 font-mono text-xs uppercase tracking-wider">Total Recipe Cost:</strong>
+                <span class="text-white font-medium">${{ (recipe.pricePerServing * recipe.servings / 100).toFixed(2) }}</span>
+              </p>
+              <p class="text-sm text-gray-400 font-light mt-1">
+                <strong class="text-yellow-400 font-mono text-xs uppercase tracking-wider">Cost Per Serving:</strong>
+                <span class="text-white font-medium">${{ (recipe.pricePerServing / 100).toFixed(2) }}</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Equipment -->
+          <div v-if="recipe.equipment?.length" class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 p-6">
+            <h2 class="text-xl font-light text-white mb-4">Equipment Needed</h2>
+            <ul class="space-y-2">
+              <li v-for="eq in recipe.equipment" :key="eq.id" class="flex items-center gap-2 text-gray-400 font-light text-sm">
+                <span class="text-yellow-400 text-xs">▸</span>
+                <span>{{ eq.name }}</span>
               </li>
             </ul>
           </div>
 
-          <!-- Instructions -->
-          <div v-if="recipe.instructions || recipe.analyzedInstructions?.length" class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
-
-            <!-- Analyzed Instructions (step by step) -->
-            <div v-if="recipe.analyzedInstructions?.length">
-              <div
-                v-for="(section, idx) in recipe.analyzedInstructions"
-                :key="idx"
-                class="mb-6"
-              >
-                <h3 v-if="section.name" class="text-lg font-semibold text-primary-600 mb-4">
-                  {{ section.name }}
-                </h3>
-                <ol class="space-y-4">
-                  <li
-                    v-for="step in section.steps"
-                    :key="step.number"
-                    class="flex gap-4"
-                  >
-                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-sm">
-                      {{ step.number }}
-                    </span>
-                    <p class="text-gray-700 leading-relaxed pt-1">{{ step.step }}</p>
-                  </li>
-                </ol>
+          <!-- Nutrition -->
+          <div v-if="recipe.nutrition?.nutrients" class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 p-6">
+            <h2 class="text-xl font-light text-white mb-4">Nutrition Facts</h2>
+            <div class="space-y-2">
+              <div v-for="nut in recipe.nutrition.nutrients.slice(0,10)" :key="nut.name" class="flex justify-between items-center text-sm">
+                <span class="text-gray-400 font-light">{{ nut.name }}</span>
+                <span class="text-yellow-400 font-medium font-mono">{{ Math.round(nut.amount) }}{{ nut.unit }}</span>
               </div>
             </div>
-
-            <!-- Fallback to plain instructions -->
-            <div v-else-if="recipe.instructions" class="text-gray-700 leading-relaxed" v-html="recipe.instructions"></div>
+            <div v-if="recipe.nutrition.caloricBreakdown" class="mt-4 pt-4 border-t border-gray-800/50">
+              <h3 class="text-white font-medium mb-3 font-mono text-xs uppercase tracking-wider">Caloric Breakdown</h3>
+              <div class="grid grid-cols-3 gap-3">
+                <div class="bg-black border border-gray-800/50 rounded-lg p-3 text-center">
+                  <div class="text-yellow-400 font-light text-2xl mb-1">{{ Math.round(recipe.nutrition.caloricBreakdown.percentCarbs) }}%</div>
+                  <div class="text-gray-500 text-xs font-mono">Carbs</div>
+                </div>
+                <div class="bg-black border border-gray-800/50 rounded-lg p-3 text-center">
+                  <div class="text-yellow-400 font-light text-2xl mb-1">{{ Math.round(recipe.nutrition.caloricBreakdown.percentFat) }}%</div>
+                  <div class="text-gray-500 text-xs font-mono">Fat</div>
+                </div>
+                <div class="bg-black border border-gray-800/50 rounded-lg p-3 text-center">
+                  <div class="text-yellow-400 font-light text-2xl mb-1">{{ Math.round(recipe.nutrition.caloricBreakdown.percentProtein) }}%</div>
+                  <div class="text-gray-500 text-xs font-mono">Protein</div>
+                </div>
+              </div>
+            </div>
           </div>
+        </aside>
 
-          <!-- Nutrition (if available) -->
-          <div v-if="recipe.nutrition?.nutrients?.length" class="mb-8 pb-8 border-b">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Nutrition (per serving)</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div
-                v-for="nutrient in mainNutrients"
-                :key="nutrient.name"
-                class="bg-gray-50 rounded-lg p-4 text-center"
-              >
-                <div class="text-xs text-gray-600 uppercase mb-2">
-                  {{ nutrient.name }}
-                </div>
-                <div class="text-2xl font-bold text-primary-600">
-                  {{ Math.round(nutrient.amount) }}
-                </div>
-                <div class="text-xs text-gray-500">{{ nutrient.unit }}</div>
+        <!-- Right: Header / Instructions / Summary -->
+        <section class="lg:col-span-2 space-y-6">
+          <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 overflow-hidden">
+            <div class="relative h-64">
+              <img :src="recipe.image" :alt="recipe.title" class="w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+            </div>
+            <div class="p-6">
+              <h1 class="text-3xl font-light text-white mb-4">{{ recipe.title }}</h1>
+              <div class="flex items-center gap-6 text-sm text-gray-400 font-mono">
+                <span class="flex items-center gap-2"><span class="text-yellow-400">⏱️</span> {{ recipe.readyInMinutes }} min</span>
+                <span class="flex items-center gap-2"><span class="text-yellow-400">🍽️</span> {{ recipe.servings }} servings</span>
+                <span v-if="recipe.healthScore" class="flex items-center gap-2"><span class="text-yellow-400">💚</span> Health: {{ recipe.healthScore }}/100</span>
               </div>
             </div>
           </div>
 
-          <!-- Source Link -->
-          <div v-if="recipe.sourceUrl" class="mt-6">
-            <a
-              :href="recipe.sourceUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              View Original Recipe
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-              </svg>
-            </a>
+          <div v-if="recipe.analyzedInstructions?.[0]?.steps?.length" class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 p-6">
+            <h2 class="text-xl font-light text-white mb-4">Instructions</h2>
+            <div class="space-y-4">
+              <div v-for="step in recipe.analyzedInstructions[0].steps" :key="step.number" class="flex gap-4">
+                <span class="flex-shrink-0 w-8 h-8 bg-yellow-400 text-black rounded-lg flex items-center justify-center text-sm font-medium">{{ step.number }}</span>
+                <div class="flex-1">
+                  <p class="text-gray-400 font-light leading-relaxed mb-2">{{ step.step }}</p>
+                  <div v-if="step.equipment?.length" class="flex items-center gap-2 mt-2">
+                    <span class="text-xs text-gray-600 font-mono uppercase tracking-wider">Equipment:</span>
+                    <div class="flex gap-2 flex-wrap">
+                      <span v-for="eq in step.equipment" :key="eq.id" class="text-xs bg-black border border-gray-800/50 text-gray-400 px-2 py-1 rounded font-mono">
+                        {{ eq.name }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </article>
+
+          <div v-if="recipe.summary" class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 p-6">
+            <h2 class="text-xl font-light text-white mb-4">About This Recipe</h2>
+            <div class="text-gray-400 font-light text-sm leading-relaxed" v-html="plainSummary"></div>
+          </div>
+        </section>
+      </section>
     </div>
   </main>
 </template>
@@ -198,82 +152,89 @@ const router = useRouter()
 const apiKey = import.meta.env.VITE_SPOONACULAR_API_KEY || ''
 
 const recipe = ref(null)
-const loading = ref(true)
+const loading = ref(false)
 const error = ref('')
+const lastQuery = route.query.q || '' // preserve search text if provided
 
-// Function to handle back navigation
+const plainSummary = computed(() =>
+  recipe.value?.summary ? recipe.value.summary.replace(/<[^>]*>/g, '') : ''
+)
+
 function goBack() {
-  // Set flag to indicate we're navigating back
-  sessionStorage.setItem('navigatingBack', 'true')
-  router.back()
+  router.push({ name: 'find-recipes', query: lastQuery ? { q: lastQuery } : {} })
 }
 
-// Extract main nutrients for display
-const mainNutrients = computed(() => {
-  if (!recipe.value?.nutrition?.nutrients) return []
+onMounted(fetchRecipe)
 
-  const mainNutrientNames = ['Calories', 'Fat', 'Carbohydrates', 'Protein', 'Sugar', 'Sodium', 'Fiber']
-  return recipe.value.nutrition.nutrients.filter(n =>
-    mainNutrientNames.includes(n.name)
-  )
-})
+async function fetchRecipe() {
+  const id = route.params.id
+  if (!id || !apiKey) { error.value = 'Missing recipe id or API key.'; return }
 
-async function fetchRecipeDetails() {
-  const recipeId = route.params.id
-
-  if (!recipeId) {
-    error.value = 'No recipe ID provided'
-    loading.value = false
-    return
-  }
-
-  if (!apiKey) {
-    error.value = 'Missing Spoonacular API key'
-    loading.value = false
-    return
-  }
-
+  loading.value = true
   try {
-    const params = new URLSearchParams({
-      apiKey,
-      includeNutrition: 'true'
-    })
-
-    const url = `https://api.spoonacular.com/recipes/${recipeId}/information?${params}`
+    const url = `https://api.spoonacular.com/recipes/${id}/information?apiKey=${apiKey}&includeNutrition=true`
     const res = await fetch(url)
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch recipe: ${res.status} ${res.statusText}`)
-    }
-
+    if (!res.ok) throw new Error('Failed to fetch recipe details')
     const data = await res.json()
+
+    // unique equipment
+    const equip = new Map()
+    if (data.analyzedInstructions?.[0]?.steps) {
+      for (const step of data.analyzedInstructions[0].steps) {
+        for (const e of (step.equipment || [])) equip.set(e.id, e)
+      }
+    }
+    data.equipment = Array.from(equip.values())
+
     recipe.value = data
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (e) {
-    console.error('Error fetching recipe:', e)
-    error.value = e?.message || 'Failed to load recipe details'
+    console.error(e)
+    error.value = e?.message || 'Failed to load recipe details.'
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => {
-  // Scroll to top when component loads
-  window.scrollTo(0, 0)
-  fetchRecipeDetails()
-})
+function addToShoppingList() {
+  if (!recipe.value?.extendedIngredients) return
+  const existing = JSON.parse(localStorage.getItem('shoppingList') || '[]')
+
+  const totalRecipeCost = recipe.value.pricePerServing
+    ? (recipe.value.pricePerServing * recipe.value.servings / 100)
+    : 0
+
+  const count = recipe.value.extendedIngredients.length || 1
+
+  const newItems = recipe.value.extendedIngredients.map(ing => {
+    let price = 0
+    if (ing.estimatedCost?.value) {
+      price = ing.estimatedCost.value / 100
+    } else if (totalRecipeCost > 0) {
+      let weight = 1
+      const n = (ing.name || '').toLowerCase()
+      if (/(chicken|beef|pork|fish)/.test(n)) weight = 3
+      else if (/(cheese|cream)/.test(n)) weight = 2
+      else if (/(salt|pepper|spice)/.test(n)) weight = 0.1
+      price = (totalRecipeCost / count) * weight
+    }
+    return {
+      id: Date.now() + Math.random(),
+      name: ing.name,
+      amount: ing.amount || 1,
+      unit: ing.unit || '',
+      recipe: recipe.value.title,
+      spoonacularPrice: price,
+      purchased: false
+    }
+  })
+
+  localStorage.setItem('shoppingList', JSON.stringify([...existing, ...newItems]))
+
+  const totalEstimated = newItems.reduce((s, i) => s + (i.spoonacularPrice || 0), 0)
+  let msg = `Added ${newItems.length} ingredients to shopping list!`
+  if (totalEstimated > 0) msg += ` Estimated cost: $${totalEstimated.toFixed(2)}`
+  if (totalRecipeCost > 0) msg += ` (Recipe total: $${totalRecipeCost.toFixed(2)})`
+  alert(msg)
+}
 </script>
-
-<style scoped>
-.spinner {
-  border: 4px solid #f3f4f6;
-  border-top-color: #f59e0b;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
