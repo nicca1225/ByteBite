@@ -22,7 +22,12 @@
           <h3 class="text-xl font-semibold text-yellow-400">Shopping List</h3>
         </div>
         <p class="text-gray-300 mb-4 font-light">Generate your shopping list</p>
-        <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-400/20">View List</button>
+        <button 
+          @click="$router.push('/shopping-list')"
+          class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-400/20"
+        >
+          View List
+        </button>
       </div>
 
       <div class="group bg-gradient-to-br from-gray-900 to-black p-6 rounded-xl shadow-lg border border-gray-800/50 hover:border-yellow-400/30 transition-all duration-300">
@@ -35,13 +40,18 @@
           <h3 class="text-xl font-semibold text-yellow-400">Budget Tracker</h3>
         </div>
         <p class="text-gray-300 mb-4 font-light">Track your meal expenses</p>
-        <button class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-400/20">View Budget</button>
+        <button 
+          @click="$router.push('/budget-tracker')"
+          class="w-full bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-400/20"
+        >
+          View Budget
+        </button>
       </div>
     </div>
 
     <div class="bg-gray-900 p-6 rounded-xl shadow-lg border border-yellow-400/30">
       <h2 class="text-2xl font-bold text-yellow-400 mb-4">Quick Actions</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200" 
         @click="$router.push('/find-recipes')">
           <div class="text-2xl mb-2">🔍</div>
@@ -59,6 +69,13 @@
         <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200">
           <div class="text-2xl mb-2">⚙️</div>
           <div class="font-semibold text-gray-300">Preferences</div>
+        </button>
+        <button 
+          class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200" 
+          @click="$router.push('/budget-tracker')"
+        >
+          <div class="text-2xl mb-2">💰</div>
+          <div class="font-semibold text-gray-300">Budget Tracker</div>
         </button>
         <button class="p-4 border-2 border-gray-700 bg-black rounded-lg hover:border-yellow-400 hover:bg-gray-800 transition-colors duration-200">
           <div class="text-2xl mb-2">📊</div>

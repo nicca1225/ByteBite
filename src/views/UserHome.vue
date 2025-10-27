@@ -142,7 +142,9 @@
           </button>
 
           <!-- Budget Tracker -->
-          <button class="group relative bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 hover:border-yellow-400/30 p-6 rounded-2xl transition-all duration-300 text-left overflow-hidden hover:scale-[1.02] hover:shadow-xl hover:shadow-yellow-400/10">
+          <button class="group relative bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 hover:border-yellow-400/30 p-6 rounded-2xl transition-all duration-300 text-left overflow-hidden hover:scale-[1.02] hover:shadow-xl hover:shadow-yellow-400/10"
+            @click="$router.push('/budget-tracker')"
+            >
             <div class="absolute inset-0 bg-yellow-400/0 group-hover:bg-yellow-400/5 transition-colors duration-300"></div>
             <div class="relative">
               <div class="w-12 h-12 border border-gray-700 rounded-xl flex items-center justify-center mb-4 group-hover:border-yellow-400/50 group-hover:scale-110 transition-all duration-300">

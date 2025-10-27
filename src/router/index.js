@@ -10,6 +10,7 @@ import FindRecipes from '../views/FindRecipes.vue'
 import RecipeDetail from '../views/RecipeDetail.vue'
 import CalorieTracker from '../views/CalorieTracker.vue'
 import PlanMeal from '../views/PlanMeal.vue'
+import BudgetTracker from '../views/BudgetTracker.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -75,8 +76,14 @@ const router = createRouter({
     },
     {
       path: '/shopping-list',
-      name: 'ShoppingList',
+      name: 'shopping-list',
       component: () => import('../views/ShoppingList.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/budget-tracker',
+      name: 'budget-tracker',
+      component: BudgetTracker,
       meta: { requiresAuth: true }
     }
   ]
