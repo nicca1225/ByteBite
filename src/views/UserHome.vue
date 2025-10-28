@@ -237,7 +237,23 @@
             </div>
           </div>
         </div>
-      </div>
+      <div class="mt-12">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-medium text-white">Weekly Calorie Intake</h3>
+              <p class="text-gray-500 text-sm font-light">Calories consumed per day</p>
+            </div>
+          </div>
+                    <div class="bg-gradient-to-br from-gray-900/80 to-black/80 border border-gray-800/50 rounded-2xl p-6">
+            <VueApexCharts
+              type="bar"
+              height="350"
+              :options="chartOptions"
+              :series="chartSeries"
+            />
+          </div>
+        </div>
+      </div>
 
       <!-- ========== SCHEDULED MEALS - Enhanced with carousel and hover effects ========== -->
       <div class="bg-gray-900/40 backdrop-blur-lg rounded-3xl p-8 border border-gray-800/30">
@@ -456,162 +472,364 @@
 <script>
 import { computed, ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import VueApexCharts from 'vue3-apexcharts'
+// --- 1. addDoc is added ---
+import { getFirestore, collection, query, where, onSnapshot, addDoc } from 'firebase/firestore' 
+import { getAuth } from 'firebase/auth'
+import { onUnmounted } from 'vue' 
 
 export default {
-  name: 'UserHome',
-  setup() {
-    const authStore = useAuthStore()
+  name: 'UserHome',
+  components: {
+    VueApexCharts,
+  },
+  setup() {
+    const authStore = useAuthStore()
+    const db = getFirestore()
+    const auth = getAuth()
+    const userName = computed(() => {
+      const name = authStore.userName
+      return name.split(' ')[0] || 'there'
+    })
 
-    const userName = computed(() => {
-      const name = authStore.userName
-      return name.split(' ')[0] || 'there'
-    })
+    const currentDate = ref(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+    const currentDay = ref(new Date().toLocaleDateString('en-US', { weekday: 'long' }))
 
-    const currentDate = ref(new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
-    const currentDay = ref(new Date().toLocaleDateString('en-US', { weekday: 'long' }))
+    // ========== ANIMATED COUNTERS ==========
+    const animatedMealsPlanned = ref(0)
+    const animatedRecipesSaved = ref(0)
+    const animatedMoneySaved = ref(0)
+    const animatedAvgCalories = ref(0)
+    const unsubscribe = ref(null)
 
-    // ========== ANIMATED COUNTERS ==========
-    const animatedMealsPlanned = ref(0)
-    const animatedRecipesSaved = ref(0)
-    const animatedMoneySaved = ref(0)
-    const animatedAvgCalories = ref(0)
+    // Animate numbers on mount
+    onMounted(() => {
+      animateCounter(animatedMealsPlanned, 12, 1000)
+      animateCounter(animatedRecipesSaved, 24, 1200)
+      animateCounter(animatedMoneySaved, 87, 1400)
+      // Call the fetch function to load chart and avg calories
+      fetchWeeklyCalories() 
+    })
 
-    // Animate numbers on mount
-    onMounted(() => {
-      animateCounter(animatedMealsPlanned, 12, 1000)
-      animateCounter(animatedRecipesSaved, 24, 1200)
-      animateCounter(animatedMoneySaved, 87, 1400)
-      animateCounter(animatedAvgCalories, 2100, 1600)
-    })
+    onUnmounted(() => {
+      if (unsubscribe.value) {
+        unsubscribe.value() // This stops listening to Firebase
+      }
+    })
 
-    function animateCounter(ref, target, duration) {
-      const start = 0
-      const increment = target / (duration / 16) // 60fps
-      let current = start
+    function animateCounter(ref, target, duration) {
+      const start = 0
+      const increment = target / (duration / 16) // 60fps
+      let current = start
 
-      const timer = setInterval(() => {
-        current += increment
-        if (current >= target) {
-          ref.value = target
-          clearInterval(timer)
-        } else {
-          ref.value = Math.floor(current)
-        }
-      }, 16)
-    }
+      const timer = setInterval(() => {
+        current += increment
+        if (current >= target) {
+          ref.value = target
+          clearInterval(timer)
+        } else {
+          ref.value = Math.floor(current)
+        }
+      }, 16)
+    }
 
-    // ========== DYNAMIC GREETING ==========
-    const timeOfDay = computed(() => {
-      const hour = new Date().getHours()
-      if (hour < 12) return '🌅 Morning'
-      if (hour < 17) return '☀️ Afternoon'
-      return '🌙 Evening'
-    })
+    // ========== CHART DATA ==========
+    const chartSeries = ref([
+      {
+        name: 'Calories',
+        data: [2000,3500,3000,2700,2200,2150,2800], // Start with zeros
+      },
+    ])
 
-    const greeting = computed(() => {
-      const hour = new Date().getHours()
-      if (hour < 12) return 'Good morning'
-      if (hour < 17) return 'Good afternoon'
-      return 'Good evening'
-    })
+    const chartOptions = ref({
+        // ... (your chartOptions object is correct, no changes needed) ...
+      	chart: {
+        id: 'weekly-calories',
+        type: 'bar',
+        height: 350,
+        background: 'transparent',
+        toolbar: {
+          show: false,
+        },
+        fontFamily: 'inherit',
+      },
+      theme: {
+        mode: 'dark',
+      },
+      colors: ['#FBBF24'], 
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          columnWidth: '40%',
+        },
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      grid: {
+        borderColor: '#374151', 
+        strokeDashArray: 4,
+        yaxis: {
+          lines: {
+            show: true,
+          },
+        },
+        xaxis: {
+           lines: {
+            show: false,
+           },
+        }
+      },
+      xaxis: {
+        categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: {
+          style: {
+            colors: '#9CA3AF', 
+            fontSize: '12px',
+          },
+        },
+        axisBorder: {
+          show: false,
+        },
+        axisTicks: {
+          show: false,
+        },
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: '#9CA3AF', 
+            fontSize: '12px',
+          },
+          formatter: (val) => `${val} kcal`,
+        },
+      },
+      tooltip: {
+        theme: 'dark',
+        y: {
+          formatter: (val) => `${val} kcal`,
+        },
+      },
+      legend: {
+        show: false,
+      },
+    })
+    
+    // --- NEW FUNCTION TO FETCH AND PROCESS FIREBASE DATA ---
+    async function fetchWeeklyCalories() {
+      if (!auth.currentUser) {
+      console.warn('No user logged in, cannot fetch calories.')
+      return
+      }
+      const userId = auth.currentUser.uid
 
-    const motivationalText = computed(() => {
-      const tips = [
-        'Your personalized nutrition hub 🍽️',
-        'Ready to fuel your day? 💪',
-        "Let's make healthy eating simple 🥗",
-        'Time to plan something delicious 👨‍🍳',
-        'Your wellness journey starts here 🌟'
-      ]
-      const dayIndex = new Date().getDay()
-      return tips[dayIndex % tips.length]
-    })
+      // A. Helper function to format date as "YYYY-MM-DD"
+      function getFormattedDate(date) {
+        const year = date.getFullYear()
+        const month = (date.getMonth() + 1).toString().padStart(2, '0')
+        const day = date.getDate().toString().padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
 
-    // ========== DAILY TIP ==========
-    const dailyTip = computed(() => {
-      const tips = [
-        'Meal prep on Sundays can save up to 5 hours during the week and reduce food waste by 30%. Consider batch cooking proteins and portioning vegetables in advance. 🥘',
-        'Staying hydrated is key! Aim for 8 glasses of water daily. Add lemon or cucumber for extra flavor and nutrients. 💧',
-        'Protein at breakfast keeps you fuller longer. Try eggs, Greek yogurt, or protein smoothies to start your day right. 🥚',
-        'Eating colorful vegetables ensures you get a variety of nutrients. Aim for at least 5 different colors on your plate daily. 🌈',
-        'Portion control tip: Use smaller plates to naturally reduce serving sizes without feeling deprived. 🍽️',
-        'Healthy fats are essential! Include avocados, nuts, and olive oil in your meals for brain health and satiety. 🥑',
-        'Meal timing matters: Try to eat your largest meal earlier in the day when your metabolism is most active. ⏰'
-      ]
-      const dayIndex = new Date().getDay()
-      return tips[dayIndex % tips.length]
-    })
+      // B. Get the date strings and labels for the current week (Mon-Sun)
+      const today = new Date()
+      const dayOfWeek = today.getDay() // 0=Sun, 1=Mon, ...
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+      const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract)
+      
+      const dateStrings = []
+      const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      const dailyCaloriesMap = {}
 
-    // ========== ADD MEAL DIALOG & STORAGE ==========
-    const showAddMealDialog = ref(false)
-    const newMeal = ref({
-      type: 'Breakfast',
-      name: '',
-      calories: null,
-      time: '',
-      date: new Date().toISOString().split('T')[0]
-    })
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek)
+        day.setDate(day.getDate() + i)
+        const dateStr = getFormattedDate(day)
+        dateStrings.push(dateStr)
+        dailyCaloriesMap[dateStr] = 0 // Initialize calories for this day at 0
+      }
 
-    const loadMeals = () => {
-      const saved = localStorage.getItem('mealPlans')
-      return saved ? JSON.parse(saved) : []
-    }
+      // C. Query Firestore using a real-time listener
+      try {
+        // Use the correct subcollection path: 'users/{userId}/mealPlans'
+      	const mealPlansCol = collection(db, 'users', userId, 'mealPlans')
+    	  const q = query(
+      	  mealPlansCol,
+      	  where('date', 'in', dateStrings) // Find all meals where the date is one of the 7 days
+    	  )
+        
+        // This listener will run every time data changes
+    	  unsubscribe.value = onSnapshot(q, (querySnapshot) => {
+      	  // Reset daily calories map on each update
+      	  let totalCalories = 0
+      	  let daysWithEntries = 0
+      	  const dailyMap = { ...dailyCaloriesMap } // Use a fresh copy of the map
+        	  
+      	  // Set all values to 0 before processing
+      	  for (const dateStr of dateStrings) {
+      	 	  dailyMap[dateStr] = 0
+      	  }
 
-    const meals = ref(loadMeals())
+      	  // D. Process the results (this is your existing logic)
+    	    querySnapshot.forEach((doc) => {
+      	    const data = doc.data()
+      	    const calories = data.calories || 0
+      	    const date = data.date // This is the "YYYY-MM-DD" string
 
-    watch(meals, (val) => {
-      localStorage.setItem('mealPlans', JSON.stringify(val))
-    }, { deep: true })
+      	    if (dailyMap[date] !== undefined) {
+      	 	  if (dailyMap[date] === 0 && calories > 0) {
+      	 		daysWithEntries++ // Count this day for the average
+      	 	  }
+      	    dailyMap[date] += calories
+      	    totalCalories += calories
+      	    }
+    	  })
 
-    function openAddMealDialog() {
-      showAddMealDialog.value = true
-    }
+      	  // E. Update the chart ref
+      	  const chartData = dateStrings.map(dateStr => dailyMap[dateStr])
+    	  chartSeries.value[0].data = chartData
+      	  
+    	  chartOptions.value.xaxis.categories = dayLabels
 
-    function closeAddMealDialog() {
-      showAddMealDialog.value = false
-      newMeal.value = {
-        type: 'Breakfast',
-        name: '',
-        calories: null,
-        time: '',
-        date: new Date().toISOString().split('T')[0]
-      }
-    }
+    	  // F. Update the "Avg Calories" stat card
+    	  const avg = daysWithEntries > 0 ? Math.round(totalCalories / daysWithEntries) : 0
+    	  animateCounter(animatedAvgCalories, avg, 1000)
 
-    function addMeal() {
-      if (!newMeal.value.name) return
-      const meal = {
-        id: Date.now(),
-        date: newMeal.value.date,
-        type: newMeal.value.type,
-        name: newMeal.value.name,
-        calories: newMeal.value.calories,
-        time: newMeal.value.time
-      }
-      meals.value.push(meal)
-      closeAddMealDialog()
-    }
+    	  }, (error) => {
+  	    // Handle errors
+  	    console.error("Error fetching weekly calories:", error)
+  	    animateCounter(animatedAvgCalories, 0, 1000)
+  	  })
 
-    return {
-      userName,
-      currentDate,
-      currentDay,
-      animatedMealsPlanned,
-      animatedRecipesSaved,
-      animatedMoneySaved,
-      animatedAvgCalories,
-      timeOfDay,
-      greeting,
-      motivationalText,
-      dailyTip,
-      // add meal dialog
-      showAddMealDialog,
-      newMeal,
-      openAddMealDialog,
-      closeAddMealDialog,
-      addMeal
-    }
-  }
+    	} catch (error) { // This will now only catch setup errors
+    	  console.error("Error setting up calorie listener:", error)
+    	  animateCounter(animatedAvgCalories, 0, 1000)
+    	}
+  		// --- 2. THE DUPLICATE CODE THAT WAS HERE IS NOW REMOVED ---
+  	}
+
+    // ========== DYNAMIC GREETING ==========
+    const timeOfDay = computed(() => {
+      const hour = new Date().getHours()
+      if (hour < 12) return '🌅 Morning'
+      if (hour < 17) return '☀️ Afternoon'
+      return '🌙 Evening'
+    })
+
+    const greeting = computed(() => {
+      const hour = new Date().getHours()
+      if (hour < 12) return 'Good morning'
+      if (hour < 17) return 'Good afternoon'
+      return 'Good evening'
+    })
+
+    const motivationalText = computed(() => {
+        // ... (your motivationalText logic is fine) ...
+      const tips = [
+        'Your personalized nutrition hub 🍽️',
+        'Ready to fuel your day? 💪',
+        "Let's make healthy eating simple 🥗",
+        'Time to plan something delicious 👨‍🍳',
+        'Your wellness journey starts here 🌟'
+      ]
+      const dayIndex = new Date().getDay()
+      return tips[dayIndex % tips.length]
+    })
+
+    // ========== DAILY TIP ==========
+    const dailyTip = computed(() => {
+        // ... (your dailyTip logic is fine) ...
+      const tips = [
+        'Meal prep on Sundays can save up to 5 hours during the week and reduce food waste by 30%. Consider batch cooking proteins and portioning vegetables in advance. 🥘',
+        'Staying hydrated is key! Aim for 8 glasses of water daily. Add lemon or cucumber for extra flavor and nutrients. 💧',
+        'Protein at breakfast keeps you fuller longer. Try eggs, Greek yogurt, or protein smoothies to start your day right. 🥚',
+        'Eating colorful vegetables ensures you get a variety of nutrients. Aim for at least 5 different colors on your plate daily. 🌈',
+        'Portion control tip: Use smaller plates to naturally reduce serving sizes without feeling deprived. 🍽️',
+        'Healthy fats are essential! Include avocados, nuts, and olive oil in your meals for brain health and satiety. 🥑',
+        'Meal timing matters: Try to eat your largest meal earlier in the day when your metabolism is most active. ⏰'
+      ]
+      const dayIndex = new Date().getDay()
+      return tips[dayIndex % tips.length]
+    })
+
+    // ========== ADD MEAL DIALOG & STORAGE ==========
+    const showAddMealDialog = ref(false)
+    const newMeal = ref({
+      type: 'Breakfast',
+      name: '',
+      calories: null,
+      time: '',
+      date: new Date().toISOString().split('T')[0]
+    })
+
+    // --- 3. REMOVED LOCALSTORAGE LOGIC (loadMeals, meals ref, watch) ---
+    // It's replaced by the Firebase real-time listener
+
+    function openAddMealDialog() {
+      showAddMealDialog.value = true
+    }
+
+    function closeAddMealDialog() {
+      showAddMealDialog.value = false
+      newMeal.value = { // Reset the form
+        type: 'Breakfast',
+        name: '',
+        calories: null,
+        time: '',
+        date: new Date().toISOString().split('T')[0]
+      }
+    }
+
+    // --- 4. MODIFIED addMeal TO SAVE TO FIREBASE ---
+    async function addMeal() {
+      if (!newMeal.value.name || !auth.currentUser) return
+      
+      const userId = auth.currentUser.uid
+      const mealPlansCol = collection(db, 'users', userId, 'mealPlans')
+
+      try {
+        await addDoc(mealPlansCol, {
+          // We copy the data from the newMeal ref
+          name: newMeal.value.name,
+          calories: Number(newMeal.value.calories) || 0, // Ensure it's a number
+          type: newMeal.value.type,
+          date: newMeal.value.date, // This is already "YYYY-MM-DD"
+          time: newMeal.value.time,
+          // Add timestamps like your screenshot
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        // Data is added. The onSnapshot listener will
+        // automatically see it and update the graph.
+        closeAddMealDialog() // Close the dialog on success
+    	} catch (error) {
+      	  console.error("Error adding meal to Firebase:", error)
+    	  // Maybe show an error to the user here
+    	}
+    }
+
+    return {
+      userName,
+      currentDate,
+      currentDay,
+      animatedMealsPlanned,
+      animatedRecipesSaved,
+      animatedMoneySaved,
+      animatedAvgCalories,
+      timeOfDay,
+      greeting,
+      motivationalText,
+      dailyTip,
+      // add meal dialog
+      showAddMealDialog,
+      newMeal,
+      openAddMealDialog,
+      closeAddMealDialog,
+      addMeal,
+      chartSeries,
+      chartOptions,
+    }
+  }
 }
 </script>
 
