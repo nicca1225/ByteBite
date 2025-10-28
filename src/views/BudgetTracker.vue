@@ -55,7 +55,7 @@
               <option value="">Select category</option>
               <option value="groceries">Groceries</option>
               <option value="dining">Dining Out</option>
-              <option value="transport">Takeaway</option>
+              <option value="takeaway">Takeaway</option>
               <option value="other">Other</option>
             </select>
           </div>
