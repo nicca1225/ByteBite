@@ -75,9 +75,10 @@ export const useAuthStore = defineStore('auth', () => {
       }).catch(err => console.error('Profile update error:', err))
 
       // Create user document in Firestore (don't wait - do in background)
-      setDoc(doc(db, 'users', userCredential.user.uid), {
+      setDoc(doc(db, 'users', email), {
         name: name,
         email: email,
+        uid: userCredential.user.uid,
         createdAt: new Date(),
         preferences: {
           dietaryRestrictions: [],
@@ -148,11 +149,12 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = userCredential.user
 
       // Check if user document exists and create if needed (do in background)
-      getDoc(doc(db, 'users', userCredential.user.uid)).then(userDoc => {
+      getDoc(doc(db, 'users', userCredential.user.email)).then(userDoc => {
         if (!userDoc.exists()) {
-          setDoc(doc(db, 'users', userCredential.user.uid), {
+          setDoc(doc(db, 'users', userCredential.user.email), {
             name: userCredential.user.displayName,
             email: userCredential.user.email,
+            uid: userCredential.user.uid,
             createdAt: new Date(),
             preferences: {
               dietaryRestrictions: [],
@@ -190,9 +192,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function getUserProfile() {
     if (!user.value) return null
-    
+
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.value.uid))
+      const userDoc = await getDoc(doc(db, 'users', user.value.email))
       return userDoc.exists() ? userDoc.data() : null
     } catch (error) {
       console.error('Error fetching user profile:', error)

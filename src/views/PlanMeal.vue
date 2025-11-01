@@ -319,6 +319,14 @@ const currentMonthYear = computed(() => {
 
 // Generate calendar days
 const calendarDays = computed(() => {
+  // Helper function to format date in LOCAL timezone (not UTC)
+  function formatLocalDate(date) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   const firstDay = new Date(currentYear.value, currentMonth.value, 1)
   const lastDay = new Date(currentYear.value, currentMonth.value + 1, 0)
   const prevLastDay = new Date(currentYear.value, currentMonth.value, 0)
@@ -338,7 +346,7 @@ const calendarDays = computed(() => {
     const date = new Date(currentYear.value, currentMonth.value - 1, dayNum)
     days.push({
       dayNumber: dayNum,
-      date: date.toISOString().split('T')[0],
+      date: formatLocalDate(date),
       dateStr: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
       isCurrentMonth: false,
@@ -354,7 +362,7 @@ const calendarDays = computed(() => {
 
     days.push({
       dayNumber: i,
-      date: date.toISOString().split('T')[0],
+      date: formatLocalDate(date),
       dateStr: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
       isCurrentMonth: true,
@@ -366,9 +374,10 @@ const calendarDays = computed(() => {
   const remainingDays = 42 - days.length // 6 rows × 7 days
   for (let i = 1; i <= remainingDays; i++) {
     const date = new Date(currentYear.value, currentMonth.value + 1, i)
+    date.setHours(0, 0, 0, 0)
     days.push({
       dayNumber: i,
-      date: date.toISOString().split('T')[0],
+      date: formatLocalDate(date),
       dateStr: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
       isCurrentMonth: false,
