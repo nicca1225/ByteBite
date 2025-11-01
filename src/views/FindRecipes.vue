@@ -282,6 +282,18 @@
   <div class="relative overflow-hidden">
     <img :src="r.image" :alt="r.title" class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300" />
     <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    <!-- Favourite button -->
+    <button
+      v-if="authStore.isAuthenticated"
+      @click="toggleFavourite(r)"
+      class="absolute top-3 right-3 rounded-full bg-black/60 backdrop-blur-sm border border-gray-700/50 hover:border-yellow-400/50 p-2 text-gray-400 hover:text-yellow-400 transition-all duration-300 shadow-lg"
+      :class="{ 'border-yellow-400/50 bg-yellow-400/20': favouritesStore.favouriteIds.has(r.id) }"
+      :title="favouritesStore.favouriteIds.has(r.id) ? 'Remove from favourites' : 'Add to favourites'"
+    >
+      <svg class="w-5 h-5" :fill="favouritesStore.favouriteIds.has(r.id) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+      </svg>
+    </button>
   </div>
   <div class="p-5 flex flex-col flex-1">
     <h3 class="font-medium text-lg text-white line-clamp-2 mb-3">{{ r.title }}</h3>
@@ -312,9 +324,13 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useFavouritesStore } from '@/stores/favourites'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const apiKey = import.meta.env.VITE_SPOONACULAR_API_KEY || ''
+const favouritesStore = useFavouritesStore()
+const authStore = useAuthStore()
 
 // Check if we're coming from navigation (back button) or fresh load
 const isNavigatingBack = sessionStorage.getItem('navigatingBack') === 'true'
@@ -407,6 +423,23 @@ async function onSearch() {
   }
 }
 
+async function toggleFavourite(recipe) {
+  try {
+    await favouritesStore.toggleFavourite({
+      id: recipe.id,
+      title: recipe.title,
+      image: recipe.image,
+      readyInMinutes: recipe.readyInMinutes,
+      aggregateLikes: recipe.aggregateLikes
+    })
+  } catch (err) {
+    console.error('Failed to toggle favourite:', err)
+  }
+}
 
-
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    await favouritesStore.loadFavourites()
+  }
+})
 </script>
