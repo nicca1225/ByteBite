@@ -28,6 +28,13 @@ service cloud.firestore {
       allow list: if isUserEmail(userEmail);
     }
 
+    // Favourite recipes subcollection - user can manage their own
+    // Structure: users/{userEmail}/favouriteRecipes/{recipeId}
+    match /users/{userEmail}/favouriteRecipes/{recipeId} {
+      allow read, create, update, delete: if isUserEmail(userEmail);
+      allow list: if isUserEmail(userEmail);
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

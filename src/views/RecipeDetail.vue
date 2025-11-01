@@ -104,7 +104,23 @@
               <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
             </div>
             <div class="p-6">
-              <h1 class="text-3xl font-light text-white mb-4">{{ recipe.title }}</h1>
+              <div class="flex items-start justify-between gap-4 mb-4">
+                <h1 class="text-3xl font-light text-white flex-1">{{ recipe.title }}</h1>
+                <!-- Favourite button -->
+                <button
+                  v-if="authStore.isAuthenticated"
+                  @click="toggleFavourite"
+                  class="flex-shrink-0 rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
+                  :class="isFavourited
+                    ? 'bg-yellow-400/20 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/30'
+                    : 'border-gray-700/50 text-gray-400 hover:border-yellow-400/50 hover:text-yellow-400'"
+                  :title="isFavourited ? 'Remove from favourites' : 'Add to favourites'"
+                >
+                  <svg class="w-6 h-6" :fill="isFavourited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+              </div>
               <div class="flex items-center gap-6 text-sm text-gray-400 font-mono">
                 <span class="flex items-center gap-2"><span class="text-yellow-400">⏱️</span> {{ recipe.readyInMinutes }} min</span>
                 <span class="flex items-center gap-2"><span class="text-yellow-400">🍽️</span> {{ recipe.servings }} servings</span>
@@ -146,15 +162,20 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useFavouritesStore } from '@/stores/favourites'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const apiKey = import.meta.env.VITE_SPOONACULAR_API_KEY || ''
+const favouritesStore = useFavouritesStore()
+const authStore = useAuthStore()
 
 const recipe = ref(null)
 const loading = ref(false)
 const error = ref('')
 const lastQuery = route.query.q || '' // preserve search text if provided
+const isFavourited = computed(() => favouritesStore.favouriteIds.has(Number(route.params.id)))
 
 const plainSummary = computed(() =>
   recipe.value?.summary ? recipe.value.summary.replace(/<[^>]*>/g, '') : ''
@@ -164,7 +185,33 @@ function goBack() {
   router.push({ name: 'find-recipes', query: lastQuery ? { q: lastQuery } : {} })
 }
 
-onMounted(fetchRecipe)
+async function toggleFavourite() {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
+  }
+
+  try {
+    if (recipe.value) {
+      await favouritesStore.toggleFavourite({
+        id: recipe.value.id,
+        title: recipe.value.title,
+        image: recipe.value.image,
+        readyInMinutes: recipe.value.readyInMinutes,
+        aggregateLikes: recipe.value.aggregateLikes || 0
+      })
+    }
+  } catch (err) {
+    console.error('Failed to toggle favourite:', err)
+  }
+}
+
+onMounted(async () => {
+  await fetchRecipe()
+  if (authStore.isAuthenticated) {
+    await favouritesStore.loadFavourites()
+  }
+})
 
 async function fetchRecipe() {
   const id = route.params.id

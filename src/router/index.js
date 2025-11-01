@@ -11,6 +11,7 @@ import RecipeDetail from '../views/RecipeDetail.vue'
 import CalorieTracker from '../views/CalorieTracker.vue'
 import PlanMeal from '../views/PlanMeal.vue'
 import BudgetTracker from '../views/BudgetTracker.vue'
+import Favourites from '../views/Favourites.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -84,6 +85,12 @@ const router = createRouter({
       path: '/budget-tracker',
       name: 'budget-tracker',
       component: BudgetTracker,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/favourites',
+      name: 'favourites',
+      component: Favourites,
       meta: { requiresAuth: true }
     }
   ]
