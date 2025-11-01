@@ -235,6 +235,74 @@ export async function loadTodaysCalorieEntries(userEmail) {
 }
 
 /**
+ * Load calorie entries for a specific period (day, week, month)
+ * @param {string} userEmail - User email address
+ * @param {string} period - 'day', 'week', or 'month'
+ * @returns {Promise<Array>} Array of calorie entries for the period
+ */
+export async function loadCalorieEntriesByPeriod(userEmail, period) {
+  try {
+    if (!userEmail || !period) {
+      console.error('❌ Missing userEmail or period');
+      return [];
+    }
+
+    console.log(`📦 Loading calorie entries for period: ${period}`);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let startDate = new Date(today);
+    let endDate = new Date(today);
+    endDate.setHours(23, 59, 59, 999);
+
+    if (period === 'week') {
+      // Get start of current week (Monday)
+      const dayOfWeek = today.getDay();
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract);
+      startDate.setHours(0, 0, 0, 0);
+
+      // End of week is next Sunday
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period === 'month') {
+      // Get start of current month
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      startDate.setHours(0, 0, 0, 0);
+
+      // End of month
+      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
+    // For 'day', startDate and endDate are already set to today
+
+    const startTimestamp = startDate.getTime();
+    const endTimestamp = endDate.getTime();
+
+    const calorieEntriesRef = collection(db, `users/${userEmail}/calorieEntries`);
+    const q = query(calorieEntriesRef);
+
+    const querySnapshot = await getDocs(q);
+
+    const entries = querySnapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toMillis() || Date.now(),
+      }))
+      .filter(entry => entry.timestamp >= startTimestamp && entry.timestamp <= endTimestamp)
+      .sort((a, b) => b.timestamp - a.timestamp);
+
+    console.log(`✅ Loaded ${entries.length} calorie entries for ${period}`);
+    return entries;
+  } catch (error) {
+    console.error('❌ Error loading calorie entries by period:', error);
+    throw new Error(`Failed to load calorie entries: ${error.message}`);
+  }
+}
+
+/**
  * Add a new calorie entry
  * @param {string} userEmail - User email address
  * @param {Object} entryData - { food, calories, mealType }

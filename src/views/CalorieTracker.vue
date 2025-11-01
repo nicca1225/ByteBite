@@ -12,14 +12,14 @@
         <span>Back to Dashboard</span>
       </button>
 
-      <div class="flex items-center justify-between mb-12">
+      <div class="flex items-center justify-between mb-8">
         <div>
           <div class="inline-block mb-3">
             <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/20">
               Nutrition
             </span>
           </div>
-          <h1 class="text-4xl sm:text-5xl font-light text-white">Daily Calorie Tracker</h1>
+          <h1 class="text-4xl sm:text-5xl font-light text-white">Calorie Tracker</h1>
         </div>
         <button
           @click="refreshEntries"
@@ -33,6 +33,23 @@
         </button>
       </div>
 
+      <!-- Time Period Selector -->
+      <div class="flex gap-3 mb-8">
+        <button
+          v-for="period in ['day', 'week', 'month']"
+          :key="period"
+          @click="selectedPeriod = period; loadEntriesByPeriod()"
+          :class="[
+            'px-4 py-2 rounded-lg font-medium text-sm uppercase tracking-wider transition-all duration-200',
+            selectedPeriod === period
+              ? 'bg-yellow-400 text-black border border-yellow-400'
+              : 'bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:border-yellow-400/30 hover:text-yellow-400'
+          ]"
+        >
+          {{ period === 'day' ? 'Today' : period === 'week' ? 'This Week' : 'This Month' }}
+        </button>
+      </div>
+
       <!-- Error Message Placeholder -->
       <div v-if="localError" class="bg-red-900/20 text-red-300 p-4 rounded-xl mb-6 border border-red-500/30">
         {{ localError }}
@@ -41,8 +58,8 @@
       <!-- Calorie Summary Card with Progress Bar -->
       <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 mb-8">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-light text-white">Today's Progress</h2>
-          <span class="text-sm font-mono text-gray-500 uppercase tracking-wider">{{ new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
+          <h2 class="text-2xl font-light text-white">{{ periodTitle }}</h2>
+          <span class="text-sm font-mono text-gray-500 uppercase tracking-wider">{{ periodDate }}</span>
         </div>
         
         <!-- Progress Bar -->
@@ -59,7 +76,7 @@
           <!-- Goal -->
           <div class="bg-black border border-gray-800/50 rounded-xl p-6">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-mono uppercase tracking-wider text-gray-500">Daily Goal</span>
+              <span class="text-sm font-mono uppercase tracking-wider text-gray-500">{{ selectedPeriod === 'day' ? 'Daily' : selectedPeriod === 'week' ? 'Weekly' : 'Monthly' }} Goal</span>
             </div>
             <div class="text-4xl font-light text-white mb-2">{{ calorieGoal }}</div>
             <div class="text-sm text-gray-600 font-mono">kcal</div>
@@ -161,7 +178,7 @@
 
         <!-- Recent Entries List (1/3 width on large screens) -->
         <div class="lg:col-span-1 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6">
-          <h2 class="text-2xl font-light text-white mb-6">Recent Entries</h2>
+          <h2 class="text-2xl font-light text-white mb-6">{{ selectedPeriod === 'day' ? 'Recent Entries' : selectedPeriod === 'week' ? 'Week Entries' : 'Month Entries' }}</h2>
 
           <div v-if="isLoadingEntries" class="text-center text-gray-500 py-10">
             <svg class="animate-spin h-8 w-8 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -202,7 +219,7 @@
           </ul>
 
           <div v-else class="text-center text-gray-500 py-10">
-            <div class="text-sm font-light">No meals logged today</div>
+            <div class="text-sm font-light">{{ selectedPeriod === 'day' ? 'No meals logged today' : selectedPeriod === 'week' ? 'No meals logged this week' : 'No meals logged this month' }}</div>
             <div class="text-xs text-gray-600 mt-1">Start tracking your nutrition</div>
           </div>
         </div>
@@ -225,10 +242,11 @@ import {
 const authStore = useAuthStore();
 
 // --- LOCAL STATE ---
-const calorieGoal = ref(2000);
+const baseCalorieGoal = ref(2000); // Base daily goal
 const localError = ref(null);
 const editingEntry = ref(null);
 const isLoadingEntries = ref(true);
+const selectedPeriod = ref('day'); // 'day', 'week', or 'month'
 
 // Initial data for display
 const dailyEntries = ref([]);
@@ -242,6 +260,17 @@ const newEntry = ref({
 
 // --- COMPUTED PROPERTIES ---
 
+const calorieGoal = computed(() => {
+  if (selectedPeriod.value === 'day') {
+    return baseCalorieGoal.value;
+  } else if (selectedPeriod.value === 'week') {
+    return baseCalorieGoal.value * 7;
+  } else {
+    // Month - assume 30 days
+    return baseCalorieGoal.value * 30;
+  }
+});
+
 const todaysCalorieTotal = computed(() => {
   return dailyEntries.value.reduce((total, entry) => total + entry.calories, 0);
 });
@@ -252,6 +281,33 @@ const caloriesRemaining = computed(() => {
 
 const progressPercentage = computed(() => {
     return (todaysCalorieTotal.value / calorieGoal.value) * 100;
+});
+
+const periodTitle = computed(() => {
+  if (selectedPeriod.value === 'day') return "Today's Progress";
+  if (selectedPeriod.value === 'week') return "This Week's Progress";
+  return "This Month's Progress";
+});
+
+const periodDate = computed(() => {
+  const today = new Date();
+  if (selectedPeriod.value === 'day') {
+    return today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // Get start of week (Monday)
+  if (selectedPeriod.value === 'week') {
+    const dayOfWeek = today.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+    return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  }
+
+  // Month
+  return today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 });
 
 // --- ACTIONS ---
@@ -271,6 +327,30 @@ async function loadTodaysEntries() {
     const entries = await loadTodaysCalorieEntries(authStore.user.email);
     dailyEntries.value = entries;
     console.log('✅ Today\'s entries loaded:', dailyEntries.value.length);
+  } catch (error) {
+    console.error('❌ Error loading entries:', error);
+    localError.value = "Failed to load entries. Please try again.";
+  } finally {
+    isLoadingEntries.value = false;
+  }
+}
+
+async function loadEntriesByPeriod() {
+  console.log(`🔄 Loading entries for period: ${selectedPeriod.value}`);
+
+  if (!authStore.user) {
+    console.error('❌ No user logged in');
+    localError.value = "Please log in to track calories.";
+    isLoadingEntries.value = false;
+    return;
+  }
+
+  try {
+    isLoadingEntries.value = true;
+    const { loadCalorieEntriesByPeriod } = await import('@/utils/firestoreUtils');
+    const entries = await loadCalorieEntriesByPeriod(authStore.user.email, selectedPeriod.value);
+    dailyEntries.value = entries;
+    console.log(`✅ Entries loaded for ${selectedPeriod.value}:`, dailyEntries.value.length);
   } catch (error) {
     console.error('❌ Error loading entries:', error);
     localError.value = "Failed to load entries. Please try again.";

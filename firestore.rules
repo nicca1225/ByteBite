@@ -2,21 +2,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // User profiles collection - user can only manage their own
-    match /users/{userEmail} {
-      allow read: if request.auth.token.email == userEmail;
-      allow create: if request.auth.token.email == userEmail;
-      allow update, delete: if request.auth.token.email == userEmail;
+    // Helper function to check if user owns the document
+    function isUserEmail(email) {
+      return request.auth != null && request.auth.token.email == email;
     }
 
-    // Calorie entries subcollection - user can manage their own
-    match /users/{userEmail}/calorieEntries/{entryId} {
-      allow read, create, update, delete: if request.auth.token.email == userEmail;
+    // User profiles collection - user can only manage their own
+    // Using email as the document ID for clarity in Firestore
+    match /users/{userEmail} {
+      allow read, create, update, delete: if isUserEmail(userEmail);
+      allow list: if request.auth != null;
     }
 
     // Meal plans subcollection - user can manage their own
+    // Structure: users/{userEmail}/mealPlans/{mealId}
     match /users/{userEmail}/mealPlans/{mealId} {
-      allow read, create, update, delete: if request.auth.token.email == userEmail;
+      allow read, create, update, delete: if isUserEmail(userEmail);
+      allow list: if isUserEmail(userEmail);
+    }
+
+    // Calorie entries subcollection - user can manage their own
+    // Structure: users/{userEmail}/calorieEntries/{entryId}
+    match /users/{userEmail}/calorieEntries/{entryId} {
+      allow read, create, update, delete: if isUserEmail(userEmail);
+      allow list: if isUserEmail(userEmail);
     }
 
     // Deny all other access
