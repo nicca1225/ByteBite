@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // User profiles collection - user can only manage their own
+    match /users/{userEmail} {
+      allow read: if request.auth.token.email == userEmail;
+      allow create: if request.auth.token.email == userEmail;
+      allow update, delete: if request.auth.token.email == userEmail;
+    }
+
+    // Calorie entries subcollection - user can manage their own
+    match /users/{userEmail}/calorieEntries/{entryId} {
+      allow read, create, update, delete: if request.auth.token.email == userEmail;
+    }
+
+    // Meal plans subcollection - user can manage their own
+    match /users/{userEmail}/mealPlans/{mealId} {
+      allow read, create, update, delete: if request.auth.token.email == userEmail;
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
