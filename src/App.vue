@@ -132,9 +132,9 @@
               <div class="absolute right-0 mt-2 w-56 bg-gradient-to-b from-gray-900 to-black rounded-2xl shadow-2xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-yellow-400/30 backdrop-blur-md">
                 <router-link to="/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800/50 hover:text-yellow-400 transition-all duration-200 group/item">
                   <svg class="w-5 h-5 mr-3 text-yellow-400 group-hover/item:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
-                  Dashboard
+                  Profile
                 </router-link>
                 <router-link to="/about" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800/50 hover:text-yellow-400 transition-all duration-200 group/item">
                   <svg class="w-5 h-5 mr-3 text-yellow-400 group-hover/item:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">

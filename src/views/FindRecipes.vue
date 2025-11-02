@@ -355,6 +355,20 @@ const diet = ref('')
 const intolerances = ref('')
 const type = ref('')
 
+// Helper function to check if any filters are set
+function hasActiveFilters() {
+  return (
+    query.value ||
+    (minCalories.value != null && minCalories.value !== '') ||
+    (maxCalories.value != null && maxCalories.value !== '') ||
+    includeIngredients.value ||
+    excludeIngredients.value ||
+    diet.value ||
+    intolerances.value ||
+    type.value
+  )
+}
+
 async function onSearch() {
   error.value = ''
   searched.value = true
@@ -362,7 +376,12 @@ async function onSearch() {
   results.value = []
 
   if (!apiKey) { error.value = 'Missing Spoonacular API key.'; return }
-  if (!query.value) return
+
+  // Check if at least one filter or search term is provided
+  if (!hasActiveFilters()) {
+    error.value = 'Please enter a search term or select at least one filter.'
+    return
+  }
 
   // quick guard: if both calories set, ensure min <= max
   if (minCalories.value != null && maxCalories.value != null && minCalories.value > maxCalories.value) {
@@ -380,8 +399,10 @@ async function onSearch() {
       apiKey
     })
 
-    // title-only server hint (no query=)
-    params.set('titleMatch', query.value.trim())
+    // Only set titleMatch if query is provided
+    if (query.value.trim()) {
+      params.set('titleMatch', query.value.trim())
+    }
 
     // OPTIONAL FILTERS – only set if user provided a value
     if (minCalories.value != null && minCalories.value !== '') params.set('minCalories', String(minCalories.value))
@@ -398,7 +419,7 @@ async function onSearch() {
     if (!res.ok) throw new Error(`Spoonacular error ${res.status}: ${await res.text()}`)
     const data = await res.json()
 
-    // strict client title filter (whole-word)
+    // strict client title filter (whole-word) - only apply if query is provided
     const q = query.value.trim()
     const words = q.split(/\s+/).filter(Boolean)
     const wordRegexes = words.map(w =>
@@ -413,7 +434,8 @@ async function onSearch() {
         readyInMinutes: r.readyInMinutes ?? null,
         aggregateLikes: typeof r.aggregateLikes === 'number' ? r.aggregateLikes : null
       }))
-      .filter(r => wordRegexes.every(rx => rx.test(r.title)))
+      // Only apply word filtering if there's a query
+      .filter(r => words.length === 0 || wordRegexes.every(rx => rx.test(r.title)))
       .sort((a, b) => (b.aggregateLikes ?? 0) - (a.aggregateLikes ?? 0))
   } catch (e) {
     console.error(e)
@@ -443,3 +465,98 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* Futuristic select dropdown styling */
+select {
+  /* Color scheme for dark theme dropdown */
+  color-scheme: dark;
+
+  /* Background and Colors */
+  background: linear-gradient(to bottom, rgb(31, 41, 55), rgb(15, 15, 15));
+  background-color: rgb(15, 15, 15);
+  color: rgb(255, 255, 255);
+
+  /* Typography - matching site's futuristic font */
+  font-family: inherit;
+  font-weight: 300;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+
+  /* Borders and Effects */
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+
+  /* Transitions for smooth interactions */
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  /* Shadow for depth */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+  /* Ensure dropdown appears below */
+  z-index: 10;
+}
+
+/* Hover state */
+select:hover {
+  border-color: rgba(250, 204, 21, 0.5);
+  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.1);
+}
+
+/* Focus state with yellow accent */
+select:focus {
+  outline: none;
+  border-color: rgba(250, 204, 21, 0.7);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.2), 0 4px 12px rgba(250, 204, 21, 0.15);
+  background: linear-gradient(to bottom, rgb(31, 41, 55), rgb(20, 20, 20));
+}
+
+/* Active state */
+select:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Style option elements for dark theme */
+option {
+  background-color: rgb(15, 15, 15);
+  color: rgb(255, 255, 255);
+  font-family: inherit;
+  font-weight: 300;
+  padding: 0.75rem 1rem;
+  border: none;
+}
+
+/* Hover state for options */
+option:hover {
+  background: linear-gradient(rgb(55, 65, 81), rgb(55, 65, 81));
+  background-color: rgb(55, 65, 81);
+  color: rgb(255, 255, 255);
+}
+
+/* Checked/Selected option styling */
+option:checked {
+  background: linear-gradient(135deg, rgb(250, 204, 21), rgb(251, 191, 36));
+  background-color: rgb(250, 204, 21);
+  color: rgb(0, 0, 0);
+  font-weight: 500;
+}
+
+/* Disabled state */
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: linear-gradient(to bottom, rgb(20, 20, 20), rgb(15, 15, 15));
+  border-color: rgba(107, 114, 128, 0.3);
+}
+
+/* Media query for better mobile support */
+@media (max-width: 640px) {
+  select {
+    font-size: 1rem; /* Avoid zoom on mobile */
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+  }
+}
+</style>

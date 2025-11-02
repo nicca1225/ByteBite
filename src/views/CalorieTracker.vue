@@ -74,9 +74,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           <!-- Goal -->
-          <div class="bg-black border border-gray-800/50 rounded-xl p-6">
+          <div class="bg-black border border-gray-800/50 rounded-xl p-6 group hover:border-yellow-400/30 transition-all duration-300 cursor-pointer" @click="openGoalEditor">
             <div class="flex items-center justify-between mb-4">
               <span class="text-sm font-mono uppercase tracking-wider text-gray-500">{{ selectedPeriod === 'day' ? 'Daily' : selectedPeriod === 'week' ? 'Weekly' : 'Monthly' }} Goal</span>
+              <button
+                @click.stop="openGoalEditor"
+                class="p-1.5 text-gray-600 hover:text-yellow-400 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                title="Edit daily goal"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-9-3l9-9m-9 9l4 4"></path>
+                </svg>
+              </button>
             </div>
             <div class="text-4xl font-light text-white mb-2">{{ calorieGoal }}</div>
             <div class="text-sm text-gray-600 font-mono">kcal</div>
@@ -224,6 +233,47 @@
           </div>
         </div>
       </div>
+
+      <!-- Edit Daily Goal Modal -->
+      <div v-if="isEditingGoal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-8 w-full max-w-md">
+          <h2 class="text-2xl font-light text-white mb-6">Edit Daily Goal</h2>
+
+          <div class="mb-6">
+            <label for="goalInput" class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-3">
+              Daily Calorie Goal (kcal)
+            </label>
+            <input
+              id="goalInput"
+              v-model.number="newGoalInput"
+              type="number"
+              min="1"
+              placeholder="2000"
+              class="w-full p-4 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors text-lg font-mono"
+              @keyup.enter="saveNewGoal"
+            />
+            <p class="text-xs text-gray-500 mt-2">This is the daily target calories you want to consume.</p>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              @click="saveNewGoal"
+              :disabled="isSavingGoal"
+              class="flex-1 bg-yellow-400 hover:bg-yellow-300 disabled:bg-gray-600 text-black font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <span v-if="isSavingGoal" class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+              <span>{{ isSavingGoal ? 'Saving...' : 'Save Goal' }}</span>
+            </button>
+            <button
+              @click="closeGoalEditor"
+              :disabled="isSavingGoal"
+              class="flex-1 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -236,6 +286,8 @@ import {
   addCalorieEntry,
   updateCalorieEntry,
   deleteCalorieEntry,
+  getDailyCalorieGoal,
+  updateDailyCalorieGoal,
 } from '@/utils/firestoreUtils';
 
 // --- AUTH ---
@@ -247,6 +299,11 @@ const localError = ref(null);
 const editingEntry = ref(null);
 const isLoadingEntries = ref(true);
 const selectedPeriod = ref('day'); // 'day', 'week', or 'month'
+
+// --- GOAL EDIT STATE ---
+const isEditingGoal = ref(false);
+const newGoalInput = ref(2000);
+const isSavingGoal = ref(false);
 
 // Initial data for display
 const dailyEntries = ref([]);
@@ -489,8 +546,69 @@ function refreshEntries() {
   loadTodaysEntries();
 }
 
+// --- GOAL EDITING FUNCTIONS ---
+function openGoalEditor() {
+  newGoalInput.value = baseCalorieGoal.value;
+  isEditingGoal.value = true;
+}
+
+function closeGoalEditor() {
+  isEditingGoal.value = false;
+  newGoalInput.value = 2000;
+}
+
+async function saveNewGoal() {
+  if (!authStore.user) {
+    console.error('❌ No user logged in');
+    localError.value = "Please log in to update your calorie goal.";
+    return;
+  }
+
+  if (!newGoalInput.value || newGoalInput.value < 1) {
+    localError.value = "Daily calorie goal must be greater than 0.";
+    return;
+  }
+
+  try {
+    isSavingGoal.value = true;
+    localError.value = null;
+
+    console.log('💾 Saving new daily calorie goal:', newGoalInput.value);
+    await updateDailyCalorieGoal(authStore.user.email, newGoalInput.value);
+
+    // Update local state
+    baseCalorieGoal.value = parseInt(newGoalInput.value);
+
+    console.log('✅ Daily calorie goal updated successfully');
+    closeGoalEditor();
+  } catch (error) {
+    console.error('❌ Error saving daily calorie goal:', error);
+    localError.value = "Failed to update your calorie goal. Please try again.";
+  } finally {
+    isSavingGoal.value = false;
+  }
+}
+
+async function loadUserDailyGoal() {
+  if (!authStore.user) {
+    console.error('❌ No user logged in');
+    return;
+  }
+
+  try {
+    console.log('🔄 Loading user daily calorie goal...');
+    const goal = await getDailyCalorieGoal(authStore.user.email);
+    baseCalorieGoal.value = goal;
+    console.log('✅ Daily goal loaded:', goal);
+  } catch (error) {
+    console.error('❌ Error loading daily goal:', error);
+    baseCalorieGoal.value = 2000; // Fall back to default
+  }
+}
+
 // --- LIFECYCLE ---
 onMounted(() => {
+  loadUserDailyGoal();
   loadTodaysEntries();
 });
 </script>

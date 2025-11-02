@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,17 +9,34 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply font-sans text-gray-300 bg-black;
+    @apply font-sans text-gray-300 bg-black tracking-wide;
   }
-  
+
   a {
     @apply text-inherit no-underline;
   }
-  
+
   button {
     @apply font-sans;
+  }
+
+  /* Typography refinements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+
+  h1 {
+    @apply text-5xl font-light leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-light;
+  }
+
+  p {
+    @apply leading-relaxed;
   }
 }
 
@@ -82,9 +101,26 @@
   .fade-leave-active {
     @apply transition-opacity duration-300;
   }
-  
+
   .fade-enter-from,
   .fade-leave-to {
     @apply opacity-0;
+  }
+
+  /* Slide fade transition for notifications */
+  .slide-fade-enter-active {
+    @apply transition-all duration-300;
+  }
+
+  .slide-fade-leave-active {
+    @apply transition-all duration-200;
+  }
+
+  .slide-fade-enter-from {
+    @apply translate-x-8 opacity-0;
+  }
+
+  .slide-fade-leave-to {
+    @apply translate-x-8 opacity-0;
   }
 }
