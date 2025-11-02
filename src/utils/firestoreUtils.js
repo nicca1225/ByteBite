@@ -15,6 +15,8 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
+  setDoc,
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -235,6 +237,74 @@ export async function loadTodaysCalorieEntries(userEmail) {
 }
 
 /**
+ * Load calorie entries for a specific period (day, week, month)
+ * @param {string} userEmail - User email address
+ * @param {string} period - 'day', 'week', or 'month'
+ * @returns {Promise<Array>} Array of calorie entries for the period
+ */
+export async function loadCalorieEntriesByPeriod(userEmail, period) {
+  try {
+    if (!userEmail || !period) {
+      console.error('❌ Missing userEmail or period');
+      return [];
+    }
+
+    console.log(`📦 Loading calorie entries for period: ${period}`);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let startDate = new Date(today);
+    let endDate = new Date(today);
+    endDate.setHours(23, 59, 59, 999);
+
+    if (period === 'week') {
+      // Get start of current week (Monday)
+      const dayOfWeek = today.getDay();
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract);
+      startDate.setHours(0, 0, 0, 0);
+
+      // End of week is next Sunday
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period === 'month') {
+      // Get start of current month
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      startDate.setHours(0, 0, 0, 0);
+
+      // End of month
+      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
+    // For 'day', startDate and endDate are already set to today
+
+    const startTimestamp = startDate.getTime();
+    const endTimestamp = endDate.getTime();
+
+    const calorieEntriesRef = collection(db, `users/${userEmail}/calorieEntries`);
+    const q = query(calorieEntriesRef);
+
+    const querySnapshot = await getDocs(q);
+
+    const entries = querySnapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toMillis() || Date.now(),
+      }))
+      .filter(entry => entry.timestamp >= startTimestamp && entry.timestamp <= endTimestamp)
+      .sort((a, b) => b.timestamp - a.timestamp);
+
+    console.log(`✅ Loaded ${entries.length} calorie entries for ${period}`);
+    return entries;
+  } catch (error) {
+    console.error('❌ Error loading calorie entries by period:', error);
+    throw new Error(`Failed to load calorie entries: ${error.message}`);
+  }
+}
+
+/**
  * Add a new calorie entry
  * @param {string} userEmail - User email address
  * @param {Object} entryData - { food, calories, mealType }
@@ -367,5 +437,144 @@ export async function getCalorieEntriesForDateRange(userEmail, startDate, endDat
   } catch (error) {
     console.error('❌ Error loading calorie entries for date range:', error);
     throw new Error(`Failed to load calorie entries: ${error.message}`);
+  }
+}
+
+/**
+ * FAVOURITE RECIPES OPERATIONS
+ * Collection Structure: users/{userEmail}/favouriteRecipes/{recipeId}
+ */
+
+/**
+ * Load all favourite recipes for a user
+ * @param {string} userEmail - User email address
+ * @returns {Promise<Array>} Array of favourite recipe objects
+ */
+export async function loadFavouriteRecipes(userEmail) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      return [];
+    }
+
+    console.log('📦 Loading favourite recipes for user:', userEmail);
+
+    const favouriteRecipesRef = collection(db, `users/${userEmail}/favouriteRecipes`);
+    const q = query(favouriteRecipesRef);
+
+    const querySnapshot = await getDocs(q);
+
+    const recipes = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      savedAt: doc.data().savedAt?.toMillis() || Date.now(),
+    }));
+
+    console.log('✅ Loaded', recipes.length, 'favourite recipes');
+    return recipes;
+  } catch (error) {
+    console.error('❌ Error loading favourite recipes:', error);
+    throw new Error(`Failed to load favourite recipes: ${error.message}`);
+  }
+}
+
+/**
+ * Add a recipe to user's favourites
+ * @param {string} userEmail - User email address
+ * @param {Object} recipeData - { id, title, image, readyInMinutes, aggregateLikes }
+ * @returns {Promise<void>}
+ */
+export async function addFavouriteRecipe(userEmail, recipeData) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      throw new Error('User email is required');
+    }
+
+    if (!recipeData.id) {
+      console.error('❌ Missing recipe id');
+      throw new Error('Recipe ID is required');
+    }
+
+    console.log('➕ Adding recipe to favourites:', recipeData.id);
+
+    const recipeDoc = doc(db, `users/${userEmail}/favouriteRecipes/${recipeData.id}`);
+
+    // Check if already exists
+    const existingRecipe = await getDocs(query(
+      collection(db, `users/${userEmail}/favouriteRecipes`),
+      where('id', '==', recipeData.id)
+    ));
+
+    if (!existingRecipe.empty) {
+      console.log('ℹ️ Recipe already in favourites');
+      return;
+    }
+
+    const favouriteData = {
+      id: recipeData.id,
+      title: recipeData.title || '',
+      image: recipeData.image || '',
+      readyInMinutes: recipeData.readyInMinutes || null,
+      aggregateLikes: recipeData.aggregateLikes || null,
+      savedAt: serverTimestamp(),
+    };
+
+    // Use setDoc to add with custom ID (recipeId)
+    await setDoc(recipeDoc, favouriteData);
+
+    console.log('✅ Recipe added to favourites');
+  } catch (error) {
+    console.error('❌ Error adding favourite recipe:', error);
+    throw new Error(`Failed to add favourite recipe: ${error.message}`);
+  }
+}
+
+/**
+ * Remove a recipe from user's favourites
+ * @param {string} userEmail - User email address
+ * @param {string} recipeId - Recipe ID to remove
+ * @returns {Promise<void>}
+ */
+export async function removeFavouriteRecipe(userEmail, recipeId) {
+  try {
+    if (!userEmail || !recipeId) {
+      console.error('❌ Missing userEmail or recipeId');
+      throw new Error('User email and Recipe ID are required');
+    }
+
+    console.log('🗑️ Removing recipe from favourites:', recipeId);
+
+    const recipeRef = doc(db, `users/${userEmail}/favouriteRecipes/${recipeId}`);
+    await deleteDoc(recipeRef);
+
+    console.log('✅ Recipe removed from favourites');
+  } catch (error) {
+    console.error('❌ Error removing favourite recipe:', error);
+    throw new Error(`Failed to remove favourite recipe: ${error.message}`);
+  }
+}
+
+/**
+ * Check if a recipe is in user's favourites
+ * @param {string} userEmail - User email address
+ * @param {string} recipeId - Recipe ID to check
+ * @returns {Promise<boolean>} True if recipe is favourited
+ */
+export async function isFavouriteRecipe(userEmail, recipeId) {
+  try {
+    if (!userEmail || !recipeId) {
+      console.error('❌ Missing userEmail or recipeId');
+      return false;
+    }
+
+    const recipeRef = doc(db, `users/${userEmail}/favouriteRecipes/${recipeId}`);
+    const { getDoc } = await import('firebase/firestore');
+    const docSnapshot = await getDoc(recipeRef);
+
+    return docSnapshot.exists();
+  } catch (error) {
+    console.error('❌ Error checking favourite recipe:', error);
+    return false;
   }
 }
