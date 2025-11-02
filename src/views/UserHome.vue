@@ -1,6 +1,6 @@
 <template>
   <div class="home min-h-screen bg-black">
-    <!-- ========== HERO SECTION - Enhanced with animated gradient background ========== -->
+    <!-- ========== HERO SECTION - Enhanced with animated gradient background ========= -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
       <div class="relative overflow-hidden rounded-3xl border border-gray-800/50 bg-gradient-to-br from-gray-900/80 via-black/60 to-gray-900/80 backdrop-blur-xl">
         <!-- Animated gradient glow effect -->
