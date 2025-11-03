@@ -44,16 +44,6 @@
                 </span>
               </li>
             </ul>
-            <div v-if="recipe.pricePerServing && recipe.pricePerServing > 0" class="mt-4 pt-4 border-t border-gray-800/50">
-              <p class="text-sm text-gray-400 font-light">
-                <strong class="text-yellow-400 font-mono text-xs uppercase tracking-wider">Total Recipe Cost:</strong>
-                <span class="text-white font-medium">${{ (recipe.pricePerServing * recipe.servings / 100).toFixed(2) }}</span>
-              </p>
-              <p class="text-sm text-gray-400 font-light mt-1">
-                <strong class="text-yellow-400 font-mono text-xs uppercase tracking-wider">Cost Per Serving:</strong>
-                <span class="text-white font-medium">${{ (recipe.pricePerServing / 100).toFixed(2) }}</span>
-              </p>
-            </div>
           </div>
 
           <!-- Equipment -->
@@ -164,6 +154,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFavouritesStore } from '@/stores/favourites'
 import { useAuthStore } from '@/stores/auth'
+import { generateSGDPrices } from '@/services/geminiPricingService'
+import { showToast } from '@/utils/toast'
 
 const route = useRoute()
 const router = useRouter()
@@ -243,45 +235,56 @@ async function fetchRecipe() {
   }
 }
 
-function addToShoppingList() {
+async function addToShoppingList() {
   if (!recipe.value?.extendedIngredients) return
-  const existing = JSON.parse(localStorage.getItem('shoppingList') || '[]')
 
-  const totalRecipeCost = recipe.value.pricePerServing
-    ? (recipe.value.pricePerServing * recipe.value.servings / 100)
-    : 0
+  try {
+    showToast('Generating Singapore supermarket prices...', 'info')
 
-  const count = recipe.value.extendedIngredients.length || 1
+    const existing = JSON.parse(localStorage.getItem('shoppingList') || '[]')
 
-  const newItems = recipe.value.extendedIngredients.map(ing => {
-    let price = 0
-    if (ing.estimatedCost?.value) {
-      price = ing.estimatedCost.value / 100
-    } else if (totalRecipeCost > 0) {
-      let weight = 1
-      const n = (ing.name || '').toLowerCase()
-      if (/(chicken|beef|pork|fish)/.test(n)) weight = 3
-      else if (/(cheese|cream)/.test(n)) weight = 2
-      else if (/(salt|pepper|spice)/.test(n)) weight = 0.1
-      price = (totalRecipeCost / count) * weight
-    }
-    return {
-      id: Date.now() + Math.random(),
-      name: ing.name,
-      amount: ing.amount || 1,
-      unit: ing.unit || '',
-      recipe: recipe.value.title,
-      spoonacularPrice: price,
-      purchased: false
-    }
-  })
+    // Generate realistic SGD prices using Gemini
+    const geminiPrices = await generateSGDPrices(recipe.value.extendedIngredients)
 
-  localStorage.setItem('shoppingList', JSON.stringify([...existing, ...newItems]))
+    const newItems = recipe.value.extendedIngredients.map(ing => {
+      const ingredientKey = ing.name.toLowerCase().trim()
+      const priceData = geminiPrices[ingredientKey]
 
-  const totalEstimated = newItems.reduce((s, i) => s + (i.spoonacularPrice || 0), 0)
-  let msg = `Added ${newItems.length} ingredients to shopping list!`
-  if (totalEstimated > 0) msg += ` Estimated cost: $${totalEstimated.toFixed(2)}`
-  if (totalRecipeCost > 0) msg += ` (Recipe total: $${totalRecipeCost.toFixed(2)})`
-  alert(msg)
+      let price = 0
+      let priceSource = 'gemini'
+      let storeConfidence = {}
+
+      if (priceData) {
+        price = priceData.estimatedPriceSGD || 0
+        storeConfidence = priceData.storeConfidence || {}
+      }
+
+      return {
+        id: Date.now() + Math.random(),
+        name: ing.name,
+        amount: ing.amount || 1,
+        unit: ing.unit || '',
+        recipe: recipe.value.title,
+        spoonacularPrice: price,
+        priceSource: priceSource,
+        priceRangeSGD: priceData?.priceRangeSGD || 'N/A',
+        storeConfidence: storeConfidence,
+        purchased: false,
+        userEditedPrice: false
+      }
+    })
+
+    localStorage.setItem('shoppingList', JSON.stringify([...existing, ...newItems]))
+
+    const totalEstimated = newItems.reduce((s, i) => s + (i.spoonacularPrice || 0), 0)
+    let msg = `Added ${newItems.length} ingredients to shopping list!`
+    if (totalEstimated > 0) msg += ` Estimated total: SGD $${totalEstimated.toFixed(2)}`
+
+    showToast(msg, 'success')
+
+  } catch (error) {
+    console.error('Error adding to shopping list:', error)
+    showToast('Failed to add ingredients. Please try again.', 'error')
+  }
 }
 </script>

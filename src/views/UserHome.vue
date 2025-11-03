@@ -203,7 +203,16 @@
             </div>
             <div class="text-4xl font-light text-white mb-2 animate-count-up">{{ animatedMealsPlanned }}</div>
             <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-mono rounded-full">+25%</span>
+              <span
+                :class="[
+                  'px-2 py-0.5 border text-xs font-mono rounded-full',
+                  mealsPlannedPercentageChange >= 0
+                    ? 'bg-green-400/10 border-green-400/20 text-green-400'
+                    : 'bg-red-400/10 border-red-400/20 text-red-400'
+                ]"
+              >
+                {{ mealsPlannedPercentageChange >= 0 ? '+' : '' }}{{ mealsPlannedPercentageChange }}%
+              </span>
               <span class="text-gray-600 text-sm">vs last week</span>
             </div>
           </div>
@@ -305,157 +314,86 @@
           </div>
         </div>
 
-        <!-- Scrollable meal cards -->
-        <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-          <!-- Meal Card 1 - Enhanced with zoom and overlay -->
-          <div class="group flex-shrink-0 w-80 bg-gradient-to-br from-gray-900/80 to-black/80 border border-gray-800/50 rounded-2xl overflow-hidden hover:border-yellow-400/30 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-yellow-400/10">
-            <div class="relative h-48 overflow-hidden">
+        <!-- Scrollable meal cards - Dynamic from user meal plans -->
+        <div v-if="weeklyMeals.length > 0" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+          <div
+            v-for="meal in weeklyMeals"
+            :key="meal.id"
+            class="group flex-shrink-0 w-80 bg-gradient-to-br from-gray-900/80 to-black/80 border border-gray-800/50 rounded-2xl overflow-hidden hover:border-yellow-400/30 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-yellow-400/10"
+          >
+            <div class="relative h-48 overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center group-hover:scale-110 transition-transform duration-700">
+              <!-- Uploaded image or emoji placeholder -->
               <img
-                src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop"
-                alt="Caesar Salad Bowl"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                v-if="meal.imageUrl"
+                :src="meal.imageUrl"
+                :alt="meal.name"
+                class="w-full h-full object-cover"
               />
+              <div v-else class="text-6xl opacity-30">
+                {{ getMealTypeEmoji(meal.type) }}
+              </div>
+
               <!-- Gradient overlay on hover -->
               <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-
-              <!-- Tags overlay -->
-              <div class="absolute top-3 left-3 flex gap-2">
-                <span class="px-2 py-1 bg-green-400/20 backdrop-blur-md border border-green-400/30 text-green-300 text-xs font-mono rounded-full">
-                  High Protein
-                </span>
-              </div>
 
               <!-- Calorie/Time overlay on hover -->
               <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                 <div class="flex gap-2">
-                  <span class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
-                    450 cal
+                  <span v-if="meal.calories" class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
+                    {{ meal.calories }} cal
                   </span>
-                  <span class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
-                    15 min
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-5">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20">Lunch</span>
-                <span class="text-xs text-gray-500 font-mono">Today</span>
-              </div>
-              <h3 class="text-lg font-medium text-white mb-2 group-hover:text-yellow-400 transition-colors">Caesar Salad Bowl</h3>
-              <p class="text-gray-500 text-sm mb-4 font-light">Fresh greens, grilled chicken, parmesan</p>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4 text-xs text-gray-500 font-mono">
-                  <span class="flex items-center gap-1">
-                    <span class="text-yellow-400">⏱</span> 15min
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <span class="text-yellow-400">🔥</span> 450cal
-                  </span>
-                </div>
-                <button class="text-yellow-400 hover:text-yellow-300 text-sm font-mono transition-colors hover:underline">View</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Meal Card 2 -->
-          <div class="group flex-shrink-0 w-80 bg-gradient-to-br from-gray-900/80 to-black/80 border border-gray-800/50 rounded-2xl overflow-hidden hover:border-yellow-400/30 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-yellow-400/10">
-            <div class="relative h-48 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop"
-                alt="Spaghetti Carbonara"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-
-              <div class="absolute top-3 left-3 flex gap-2">
-                <span class="px-2 py-1 bg-amber-400/20 backdrop-blur-md border border-amber-400/30 text-amber-300 text-xs font-mono rounded-full">
-                  Comfort Food
-                </span>
-              </div>
-
-              <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                <div class="flex gap-2">
-                  <span class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
-                    680 cal
-                  </span>
-                  <span class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
-                    25 min
+                  <span v-if="meal.time" class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
+                    {{ meal.time }}
                   </span>
                 </div>
               </div>
             </div>
 
             <div class="p-5">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20">Dinner</span>
-                <span class="text-xs text-gray-500 font-mono">Today</span>
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20">
+                    {{ meal.type }}
+                  </span>
+                  <span class="text-xs text-gray-500 font-mono">{{ formatMealDate(meal.date) }}</span>
+                </div>
+                <button
+                  @click="openEditMealModal(meal)"
+                  class="text-gray-500 hover:text-yellow-400 transition-colors p-1 hover:bg-yellow-400/10 rounded-lg"
+                  title="Edit meal"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
               </div>
-              <h3 class="text-lg font-medium text-white mb-2 group-hover:text-yellow-400 transition-colors">Spaghetti Carbonara</h3>
-              <p class="text-gray-500 text-sm mb-4 font-light">Classic Italian pasta with bacon & egg</p>
+              <h3 class="text-lg font-medium text-white mb-2 group-hover:text-yellow-400 transition-colors line-clamp-2">
+                {{ meal.name }}
+              </h3>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 text-xs text-gray-500 font-mono">
-                  <span class="flex items-center gap-1">
-                    <span class="text-yellow-400">⏱</span> 25min
+                  <span v-if="meal.time" class="flex items-center gap-1">
+                    <span class="text-yellow-400">⏱</span> {{ meal.time }}
                   </span>
-                  <span class="flex items-center gap-1">
-                    <span class="text-yellow-400">🔥</span> 680cal
+                  <span v-if="meal.calories" class="flex items-center gap-1">
+                    <span class="text-yellow-400">🔥</span> {{ meal.calories }}cal
                   </span>
                 </div>
-                <button class="text-yellow-400 hover:text-yellow-300 text-sm font-mono transition-colors hover:underline">View</button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Meal Card 3 -->
-          <div class="group flex-shrink-0 w-80 bg-gradient-to-br from-gray-900/80 to-black/80 border border-gray-800/50 rounded-2xl overflow-hidden hover:border-yellow-400/30 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-yellow-400/10">
-            <div class="relative h-48 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=400&h=300&fit=crop"
-                alt="Protein Pancakes"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-
-              <div class="absolute top-3 left-3 flex gap-2">
-                <span class="px-2 py-1 bg-cyan-400/20 backdrop-blur-md border border-cyan-400/30 text-cyan-300 text-xs font-mono rounded-full">
-                  Quick Meal
-                </span>
-              </div>
-
-              <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                <div class="flex gap-2">
-                  <span class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
-                    380 cal
-                  </span>
-                  <span class="px-2 py-1 bg-black/60 backdrop-blur-md border border-gray-700 text-gray-300 text-xs font-mono rounded-lg">
-                    20 min
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-5">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20">Breakfast</span>
-                <span class="text-xs text-gray-500 font-mono">Tomorrow</span>
-              </div>
-              <h3 class="text-lg font-medium text-white mb-2 group-hover:text-yellow-400 transition-colors">Protein Pancakes</h3>
-              <p class="text-gray-500 text-sm mb-4 font-light">Fluffy pancakes with berries & maple syrup</p>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4 text-xs text-gray-500 font-mono">
-                  <span class="flex items-center gap-1">
-                    <span class="text-yellow-400">⏱</span> 20min
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <span class="text-yellow-400">🔥</span> 380cal
-                  </span>
-                </div>
-                <button class="text-yellow-400 hover:text-yellow-300 text-sm font-mono transition-colors hover:underline">View</button>
-              </div>
-            </div>
-          </div>
+        <!-- Empty state -->
+        <div v-else class="text-center py-12">
+          <div class="text-4xl mb-3 opacity-30">🍽️</div>
+          <p class="text-gray-400 text-sm mb-4">No meals planned for this week yet</p>
+          <button
+            @click="openAddMealDialog"
+            class="inline-block px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-black text-sm font-medium rounded-lg transition-colors"
+          >
+            Add Your First Meal
+          </button>
         </div>
       </div>
 
@@ -494,15 +432,26 @@
       @close="closeAddMealDialog"
       @submit="handleMealSubmit"
     />
+
+    <!-- ========== EDIT MEAL MODAL ========== -->
+    <EditMealModal
+      :isOpen="showEditMealModal"
+      :meal="selectedMealForEdit"
+      @close="closeEditMealModal"
+      @submit="handleEditMealSubmit"
+      @delete="handleDeleteMeal"
+    />
   </div>
 </template>
 
 <script>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useFavouritesStore } from '@/stores/favourites'
 import VueApexCharts from 'vue3-apexcharts'
 import AddMealModal from '@/components/AddMealModal.vue'
-import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs } from 'firebase/firestore'
+import EditMealModal from '@/components/EditMealModal.vue'
+import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs, onSnapshot as firestoreOnSnapshot, updateDoc, deleteDoc, doc } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { onUnmounted } from 'vue'
 
@@ -511,6 +460,7 @@ export default {
   components: {
     VueApexCharts,
     AddMealModal,
+    EditMealModal,
   },
   setup() {
     const authStore = useAuthStore()
@@ -531,19 +481,130 @@ export default {
     const animatedRecipesSaved = ref(0)
     const animatedMoneySaved = ref(0)
     const animatedAvgCalories = ref(0)
+    const mealsPlannedPercentageChange = ref(0)
     const unsubscribe = ref(null)
+
+    // ========== FETCH WEEKLY MEALS - For scheduled meals section ==========
+    const weeklyMeals = ref([])
+    let mealsUnsubscribe = null
+
+    async function loadWeeklyMeals() {
+      if (!authStore.isAuthenticated) {
+        console.warn('⚠️ No user authenticated for weekly meals')
+        return
+      }
+
+      try {
+        const userEmail = authStore.userEmail // Using email from auth store
+        console.log('📧 Loading meals for user:', userEmail)
+        // Get current week dates
+        const today = new Date()
+        const dayOfWeek = today.getDay()
+        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+        const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract)
+
+        const dateStrings = []
+        for (let i = 0; i < 7; i++) {
+          const day = new Date(startOfWeek)
+          day.setDate(day.getDate() + i)
+          const year = day.getFullYear()
+          const month = (day.getMonth() + 1).toString().padStart(2, '0')
+          const dayStr = day.getDate().toString().padStart(2, '0')
+          dateStrings.push(`${year}-${month}-${dayStr}`)
+        }
+        console.log('📅 Week dates:', dateStrings)
+
+        // Get last week dates for percentage calculation
+        const lastWeekStart = new Date(startOfWeek)
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7)
+        const lastWeekDateStrings = []
+        for (let i = 0; i < 7; i++) {
+          const day = new Date(lastWeekStart)
+          day.setDate(day.getDate() + i)
+          const year = day.getFullYear()
+          const month = (day.getMonth() + 1).toString().padStart(2, '0')
+          const dayStr = day.getDate().toString().padStart(2, '0')
+          lastWeekDateStrings.push(`${year}-${month}-${dayStr}`)
+        }
+        console.log('📅 Last week dates:', lastWeekDateStrings)
+
+        // Unsubscribe from previous listener if exists
+        if (mealsUnsubscribe) {
+          mealsUnsubscribe()
+        }
+
+        // Set up real-time listener for weekly meals
+        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
+        console.log('🔍 Querying collection: users/', userEmail, '/mealPlans')
+        const mealQuery = query(mealPlansCol, where('date', 'in', dateStrings))
+
+        mealsUnsubscribe = onSnapshot(
+          mealQuery,
+          async (snapshot) => {
+            console.log('📸 Snapshot received, doc count:', snapshot.size)
+            const meals = []
+            snapshot.forEach((doc) => {
+              const data = doc.data()
+              console.log('📝 Meal:', data.name, 'Date:', data.date)
+              meals.push({
+                id: doc.id,
+                name: data.name || 'Untitled Meal',
+                type: data.type || 'Meal',
+                date: data.date,
+                calories: data.calories,
+                time: data.time,
+                imageUrl: data.imageUrl
+              })
+            })
+            // Sort by date
+            weeklyMeals.value = meals.sort((a, b) => {
+              const dateA = new Date(a.date)
+              const dateB = new Date(b.date)
+              return dateA - dateB
+            })
+            console.log('🍽️ Weekly meals loaded:', weeklyMeals.value.length, 'meals')
+            console.log('📊 Meals:', weeklyMeals.value)
+
+            // Calculate percentage change vs last week
+            try {
+              const lastWeekQuery = query(mealPlansCol, where('date', 'in', lastWeekDateStrings))
+              const lastWeekSnapshot = await getDocs(lastWeekQuery)
+              const lastWeekCount = lastWeekSnapshot.size
+              const thisWeekCount = snapshot.size
+
+              if (lastWeekCount === 0) {
+                // If no meals last week, calculate as 100% increase
+                mealsPlannedPercentageChange.value = thisWeekCount > 0 ? 100 : 0
+              } else {
+                const percentageChange = Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100)
+                mealsPlannedPercentageChange.value = percentageChange
+              }
+
+              console.log(`📊 Meals comparison: This week: ${thisWeekCount}, Last week: ${lastWeekCount}, Change: ${mealsPlannedPercentageChange.value}%`)
+            } catch (error) {
+              console.error('❌ Error calculating percentage change:', error)
+            }
+          },
+          (error) => {
+            console.error('❌ Error fetching meals:', error)
+          }
+        )
+      } catch (error) {
+        console.error('❌ Error loading weekly meals:', error)
+      }
+    }
 
     // Initialize Firestore listener on mount
     onMounted(() => {
-      animateCounter(animatedMealsPlanned, 12, 1000)
-      animateCounter(animatedRecipesSaved, 24, 1200)
-      animateCounter(animatedMoneySaved, 87, 1400)
-
       // Fetch weekly calories from Firestore
       if (auth.currentUser) {
         fetchWeeklyCalories()
+        fetchMealsPlanned()
+        fetchRecipesSaved()
+        fetchMoneySaved()
+        loadWeeklyMeals()
       } else {
-        console.warn('⚠️ No authenticated user - cannot fetch calorie data')
+        console.warn('⚠️ No authenticated user - cannot fetch data')
       }
     })
 
@@ -551,6 +612,9 @@ export default {
     onUnmounted(() => {
       if (unsubscribe.value) {
         unsubscribe.value()
+      }
+      if (mealsUnsubscribe) {
+        mealsUnsubscribe()
       }
     })
 
@@ -651,6 +715,135 @@ export default {
         show: false,
       },
     })
+
+    // ========== FETCH MEALS PLANNED - Count from mealPlans this week ==========
+    async function fetchMealsPlanned() {
+      if (!auth.currentUser) return
+
+      const userEmail = auth.currentUser.email
+
+      // Get current week dates
+      const today = new Date()
+      const dayOfWeek = today.getDay()
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+      const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract)
+
+      const dateStrings = []
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek)
+        day.setDate(day.getDate() + i)
+        const year = day.getFullYear()
+        const month = (day.getMonth() + 1).toString().padStart(2, '0')
+        const dayStr = day.getDate().toString().padStart(2, '0')
+        dateStrings.push(`${year}-${month}-${dayStr}`)
+      }
+
+      try {
+        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
+        const mealPlansQuery = query(mealPlansCol, where('date', 'in', dateStrings))
+        const snapshot = await getDocs(mealPlansQuery)
+
+        const count = snapshot.size
+        console.log('🍽️ Meals planned this week:', count)
+        animateCounter(animatedMealsPlanned, count, 1000)
+      } catch (error) {
+        console.error('❌ Error fetching meals planned:', error)
+        animateCounter(animatedMealsPlanned, 0, 1000)
+      }
+    }
+
+    // ========== FETCH RECIPES SAVED - Uses favourites store with real-time updates ==========
+    async function fetchRecipesSaved() {
+      const favouritesStore = useFavouritesStore()
+
+      if (!authStore.isAuthenticated) {
+        console.warn('⚠️ No user authenticated for recipe count')
+        animateCounter(animatedRecipesSaved, 0, 1000)
+        return
+      }
+
+      try {
+        console.log('📚 Loading recipes from favourites store...')
+
+        // Load favourites (this triggers real-time listener in store)
+        await favouritesStore.loadFavourites()
+
+        // Update counter with initial count
+        const initialCount = favouritesStore.favouriteCount
+        console.log('📚 Initial recipes saved count:', initialCount)
+        animateCounter(animatedRecipesSaved, initialCount, 1000)
+
+        // Watch for store changes to update counter
+        watch(
+          () => favouritesStore.favouriteCount,
+          (newCount) => {
+            console.log('📚 Recipes count updated:', newCount)
+            animateCounter(animatedRecipesSaved, newCount, 1000)
+          }
+        )
+
+        console.log('✅ Recipes listener setup complete')
+      } catch (error) {
+        console.error('❌ Error loading recipes:', error)
+        animateCounter(animatedRecipesSaved, 0, 1000)
+      }
+    }
+
+    // ========== FETCH MONEY SAVED - Calculate from budget tracker ==========
+    async function fetchMoneySaved() {
+      try {
+        // Get expenses and monthly budget from localStorage
+        const expensesRaw = localStorage.getItem('expenses')
+        const expenses = expensesRaw ? JSON.parse(expensesRaw) : []
+        const monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget') || '0')
+
+        if (monthlyBudget <= 0) {
+          console.log('💰 No budget set, calculating from shopping list savings')
+          // Fallback: estimate from shopping list
+          const shoppingListRaw = localStorage.getItem('shoppingList')
+          const shoppingList = shoppingListRaw ? JSON.parse(shoppingListRaw) : []
+
+          const now = new Date()
+          const currentMonth = now.getMonth()
+          const currentYear = now.getFullYear()
+
+          let totalCost = 0
+          shoppingList.forEach(item => {
+            if (item.purchasedAt && item.spoonacularPrice) {
+              const purchaseDate = new Date(item.purchasedAt)
+              if (purchaseDate.getMonth() === currentMonth && purchaseDate.getFullYear() === currentYear) {
+                totalCost += item.spoonacularPrice
+              }
+            }
+          })
+
+          const estimatedSavings = Math.round(totalCost * 0.15)
+          animateCounter(animatedMoneySaved, estimatedSavings, 1200)
+          return
+        }
+
+        // Get current month expenses
+        const now = new Date()
+        const currentMonth = now.getMonth()
+        const currentYear = now.getFullYear()
+
+        let currentMonthSpending = 0
+        expenses.forEach(expense => {
+          const expenseDate = new Date(expense.date)
+          if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+            currentMonthSpending += parseFloat(expense.amount || 0)
+          }
+        })
+
+        // Calculate savings: difference between budget and actual spending
+        const moneySaved = Math.max(0, monthlyBudget - currentMonthSpending)
+        console.log(`💰 Money saved this month: $${moneySaved.toFixed(2)} (Budget: $${monthlyBudget}, Spent: $${currentMonthSpending.toFixed(2)})`)
+        animateCounter(animatedMoneySaved, Math.round(moneySaved), 1200)
+      } catch (error) {
+        console.error('❌ Error calculating money saved:', error)
+        animateCounter(animatedMoneySaved, 0, 1200)
+      }
+    }
 
     // ========== FETCH WEEKLY CALORIES FROM FIRESTORE (Both mealPlans & calorieEntries) ==========
     async function fetchWeeklyCalories() {
@@ -867,6 +1060,88 @@ export default {
       }
     }
 
+    // ========== EDIT MEAL MODAL STATE ==========
+    const showEditMealModal = ref(false)
+    const selectedMealForEdit = ref(null)
+
+    const openEditMealModal = (meal) => {
+      selectedMealForEdit.value = meal
+      showEditMealModal.value = true
+    }
+
+    const closeEditMealModal = () => {
+      showEditMealModal.value = false
+      selectedMealForEdit.value = null
+    }
+
+    const handleEditMealSubmit = async (updatedMeal) => {
+      try {
+        const userEmail = authStore.userEmail
+        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
+        const docRef = doc(mealPlansCol, updatedMeal.id)
+
+        // Update meal in Firestore
+        await updateDoc(docRef, {
+          type: updatedMeal.type,
+          name: updatedMeal.name,
+          calories: updatedMeal.calories,
+          time: updatedMeal.time,
+          imageUrl: updatedMeal.imageUrl || null
+        })
+
+        console.log('✅ Meal updated successfully')
+        closeEditMealModal()
+      } catch (error) {
+        console.error('❌ Error updating meal:', error)
+      }
+    }
+
+    const handleDeleteMeal = async (mealId) => {
+      try {
+        const userEmail = authStore.userEmail
+        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
+        const docRef = doc(mealPlansCol, mealId)
+
+        // Delete meal from Firestore
+        await deleteDoc(docRef)
+
+        console.log('✅ Meal deleted successfully')
+        closeEditMealModal()
+      } catch (error) {
+        console.error('❌ Error deleting meal:', error)
+      }
+    }
+
+    // ========== HELPER METHODS ==========
+    const getMealTypeEmoji = (type) => {
+      const emojis = {
+        'Breakfast': '🥞',
+        'Lunch': '🥗',
+        'Dinner': '🍝',
+        'Snack': '🍎'
+      }
+      return emojis[type] || '🍽️'
+    }
+
+    const formatMealDate = (dateStr) => {
+      const date = new Date(dateStr)
+      const today = new Date()
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+
+      // Format dates for comparison (removing time)
+      const dateStrToday = today.toISOString().split('T')[0]
+      const dateStrTomorrow = tomorrow.toISOString().split('T')[0]
+
+      if (dateStr === dateStrToday) {
+        return 'Today'
+      } else if (dateStr === dateStrTomorrow) {
+        return 'Tomorrow'
+      } else {
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      }
+    }
+
     return {
       userName,
       currentDate,
@@ -875,6 +1150,7 @@ export default {
       animatedRecipesSaved,
       animatedMoneySaved,
       animatedAvgCalories,
+      mealsPlannedPercentageChange,
       timeOfDay,
       greeting,
       motivationalText,
@@ -886,6 +1162,15 @@ export default {
       handleMealSubmit,
       chartSeries,
       chartOptions,
+      weeklyMeals,
+      getMealTypeEmoji,
+      formatMealDate,
+      showEditMealModal,
+      selectedMealForEdit,
+      openEditMealModal,
+      closeEditMealModal,
+      handleEditMealSubmit,
+      handleDeleteMeal,
     }
   }
 }
