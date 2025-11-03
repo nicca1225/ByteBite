@@ -464,11 +464,16 @@ export async function loadFavouriteRecipes(userEmail) {
 
     const querySnapshot = await getDocs(q);
 
-    const recipes = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      savedAt: doc.data().savedAt?.toMillis() || Date.now(),
-    }));
+    const recipes = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.id,
+        title: data.title,
+        image: data.image,
+        readyInMinutes: data.readyInMinutes,
+        aggregateLikes: data.aggregateLikes || 0
+      };
+    });
 
     console.log('✅ Loaded', recipes.length, 'favourite recipes');
     return recipes;

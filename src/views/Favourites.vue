@@ -4,24 +4,13 @@
     <!-- HEADER -->
     <section class="px-4 py-12 border-b border-gray-800/50">
       <div class="max-w-6xl mx-auto">
-        <div class="flex items-center gap-4 mb-4">
-          <RouterLink
-            to="/find-recipes"
-            class="w-10 h-10 rounded-lg border border-gray-800/50 hover:border-yellow-400/50 text-gray-400 hover:text-yellow-400 flex items-center justify-center transition-colors"
-            title="Back to Find Recipes"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </RouterLink>
-          <div>
-            <div class="inline-block mb-2">
-              <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/20">
-                Your Collection
-              </span>
-            </div>
-            <h1 class="text-4xl sm:text-5xl font-light text-white">Favourite Recipes</h1>
+        <div class="mb-4">
+          <div class="inline-block mb-2">
+            <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/20">
+              Your Collection
+            </span>
           </div>
+          <h1 class="text-4xl sm:text-5xl font-light text-white">Favourite Recipes</h1>
         </div>
         <p class="text-gray-400 font-light">
           {{ favouriteCount }} {{ favouriteCount === 1 ? 'recipe' : 'recipes' }} saved
@@ -107,7 +96,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFavouritesStore } from '@/stores/favourites'
 import { useAuthStore } from '@/stores/auth'
@@ -115,15 +104,26 @@ import { useAuthStore } from '@/stores/auth'
 const favouritesStore = useFavouritesStore()
 const authStore = useAuthStore()
 
-const isLoading = favouritesStore.isLoading
-const error = favouritesStore.error
-const favourites = favouritesStore.favourites
-const favouriteCount = favouritesStore.favouriteCount
-const isFavouritesEmpty = favouritesStore.isFavouritesEmpty
+// Use computed properties to maintain reactivity
+// Note: Pinia store already returns reactive refs, so we can use them directly
+const isLoading = computed(() => favouritesStore.isLoading)
+const error = computed(() => favouritesStore.error)
+const favourites = computed(() => favouritesStore.favourites)
+const favouriteCount = computed(() => favouritesStore.favouriteCount)
+const isFavouritesEmpty = computed(() => favouritesStore.isFavouritesEmpty)
+
+console.log('Favourites.vue script setup - favourites:', favourites)
 
 onMounted(async () => {
+  console.log('🎯 Favourites.vue onMounted - authStore.isAuthenticated:', authStore.isAuthenticated)
+  console.log('📊 Current favourites in store:', favouritesStore.favourites.length)
+
   if (authStore.isAuthenticated) {
+    console.log('🔄 Calling loadFavourites...')
     await favouritesStore.loadFavourites()
+    console.log('✅ loadFavourites complete, favourites:', favouritesStore.favourites.length)
+  } else {
+    console.log('⚠️ User not authenticated')
   }
 })
 
