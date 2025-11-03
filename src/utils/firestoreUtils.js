@@ -578,3 +578,75 @@ export async function isFavouriteRecipe(userEmail, recipeId) {
     return false;
   }
 }
+
+/**
+ * USER PREFERENCES OPERATIONS
+ * Collection Structure: users/{userEmail}
+ */
+
+/**
+ * Get user's daily calorie goal
+ * @param {string} userEmail - User email address
+ * @returns {Promise<number>} Daily calorie goal (default: 2000)
+ */
+export async function getDailyCalorieGoal(userEmail) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      return 2000; // Default goal
+    }
+
+    console.log('📦 Loading daily calorie goal for user:', userEmail);
+
+    const userRef = doc(db, 'users', userEmail);
+    const userSnapshot = await getDoc(userRef);
+
+    if (userSnapshot.exists()) {
+      const dailyGoal = userSnapshot.data().dailyCalorieGoal;
+      const goal = dailyGoal || 2000; // Default to 2000 if not set
+      console.log('✅ Loaded daily calorie goal:', goal);
+      return goal;
+    } else {
+      console.log('ℹ️ User document not found, using default goal: 2000');
+      return 2000;
+    }
+  } catch (error) {
+    console.error('❌ Error loading daily calorie goal:', error);
+    return 2000; // Default goal on error
+  }
+}
+
+/**
+ * Update user's daily calorie goal
+ * @param {string} userEmail - User email address
+ * @param {number} goal - New daily calorie goal
+ * @returns {Promise<void>}
+ */
+export async function updateDailyCalorieGoal(userEmail, goal) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      throw new Error('User email is required');
+    }
+
+    if (!goal || goal < 1) {
+      console.error('❌ Invalid calorie goal');
+      throw new Error('Daily calorie goal must be greater than 0');
+    }
+
+    console.log('✏️ Updating daily calorie goal to:', goal);
+
+    const userRef = doc(db, 'users', userEmail);
+
+    // Use setDoc with merge: true to update or create the document
+    await setDoc(userRef, {
+      dailyCalorieGoal: parseInt(goal),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    console.log('✅ Daily calorie goal updated to:', goal);
+  } catch (error) {
+    console.error('❌ Error updating daily calorie goal:', error);
+    throw new Error(`Failed to update daily calorie goal: ${error.message}`);
+  }
+}

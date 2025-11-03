@@ -165,13 +165,40 @@
               <div
                 v-for="meal in getMealsForDay(selectedDay?.date)"
                 :key="meal.id"
-                class="bg-black border border-gray-800/50 rounded-lg p-4 flex items-center justify-between group hover:border-yellow-400/30 transition-colors"
+                class="bg-black border border-gray-800/50 rounded-lg overflow-hidden hover:border-yellow-400/30 transition-colors group"
               >
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
+                <!-- Meal Image or Emoji -->
+                <div v-if="meal.imageUrl" class="relative h-32 overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
+                  <img :src="meal.imageUrl" :alt="meal.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
+                </div>
+
+                <!-- Meal Details -->
+                <div class="p-4">
+                  <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20">
                       {{ meal.type }}
                     </span>
+                    <div class="flex items-center gap-2">
+                      <button
+                        @click="openEditMealDialog(meal, selectedDay?.date)"
+                        class="p-1 text-gray-500 hover:text-yellow-400 transition-colors hover:bg-yellow-400/10 rounded-lg"
+                        title="Edit meal"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        @click="removeMeal(meal.id)"
+                        class="p-1 text-gray-500 hover:text-red-400 transition-colors hover:bg-red-900/20 rounded-lg"
+                        title="Delete meal"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <h4 class="font-medium text-white mb-1">{{ meal.name }}</h4>
                   <div class="flex items-center gap-4 text-xs text-gray-500 font-mono">
@@ -179,14 +206,6 @@
                     <span v-if="meal.time">{{ meal.time }}</span>
                   </div>
                 </div>
-                <button
-                  @click="removeMeal(meal.id)"
-                  class="p-2 text-gray-600 hover:text-red-400 transition-colors"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
               </div>
             </div>
 
@@ -271,6 +290,153 @@
           </form>
         </div>
       </div>
+
+      <!-- Edit Meal Modal -->
+      <div
+        v-if="showEditMealDialog"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+        @click.self="closeEditMealDialog"
+      >
+        <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-light text-white">Edit Meal</h2>
+            <button
+              @click="closeEditMealDialog"
+              class="w-8 h-8 rounded-lg border border-gray-700 hover:border-gray-600 text-gray-400 hover:text-white flex items-center justify-center transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <form @submit.prevent="submitEditMeal" class="space-y-5">
+            <!-- Image Upload Section -->
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Meal Image (Optional)</label>
+              <div class="relative">
+                <!-- Image Preview or Placeholder -->
+                <div class="w-full h-40 bg-black border border-gray-800 rounded-lg overflow-hidden flex items-center justify-center mb-3">
+                  <img
+                    v-if="editMealPreview"
+                    :src="editMealPreview"
+                    :alt="editMealForm.name"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="text-4xl opacity-30">
+                    {{ getMealTypeEmoji(editMealForm.type) }}
+                  </div>
+                </div>
+
+                <!-- File Input -->
+                <div class="flex items-center gap-2">
+                  <input
+                    ref="editFileInput"
+                    type="file"
+                    accept="image/*"
+                    @change="handleEditImageUpload"
+                    class="hidden"
+                  />
+                  <button
+                    type="button"
+                    @click="$refs.editFileInput.click()"
+                    class="flex-1 px-3 py-2 bg-yellow-400 text-black text-sm font-medium rounded-lg hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Upload Image</span>
+                  </button>
+                  <button
+                    v-if="editMealPreview"
+                    type="button"
+                    @click="removeEditImage"
+                    class="px-3 py-2 bg-red-900/20 text-red-300 border border-red-500/30 rounded-lg hover:bg-red-900/40 transition-colors text-sm font-medium"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Meal Type -->
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Meal Type</label>
+              <select
+                v-model="editMealForm.type"
+                required
+                class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
+              >
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Snack">Snack</option>
+              </select>
+            </div>
+
+            <!-- Meal Name -->
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Meal Name</label>
+              <input
+                v-model="editMealForm.name"
+                type="text"
+                placeholder="e.g., Grilled Chicken Salad"
+                required
+                class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
+              />
+            </div>
+
+            <!-- Calories and Time -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Calories</label>
+                <input
+                  v-model.number="editMealForm.calories"
+                  type="number"
+                  placeholder="450"
+                  class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Time</label>
+                <input
+                  v-model="editMealForm.time"
+                  type="time"
+                  class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
+                />
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-3 pt-2">
+              <button
+                type="submit"
+                :disabled="editMealIsUploading"
+                class="flex-1 bg-yellow-400 hover:bg-yellow-300 disabled:bg-gray-600 text-black font-medium py-3 rounded-lg transition-colors"
+              >
+                {{ editMealIsUploading ? 'Saving...' : 'Save Changes' }}
+              </button>
+              <button
+                type="button"
+                @click="closeEditMealDialog"
+                class="flex-1 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white font-medium py-3 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <!-- Delete Button -->
+            <button
+              type="button"
+              @click="deleteEditMeal"
+              class="w-full px-4 py-2 bg-red-900/20 text-red-300 border border-red-500/30 rounded-lg hover:bg-red-900/40 transition-colors text-sm font-medium"
+            >
+              Delete Meal
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -284,6 +450,7 @@ import {
   updateMealPlan,
   deleteMealPlan,
 } from '@/utils/firestoreUtils'
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 // Auth store
 const authStore = useAuthStore()
@@ -300,6 +467,7 @@ const error = ref(null)
 // Dialog state
 const showDayDetail = ref(false)
 const showAddMealDialog = ref(false)
+const showEditMealDialog = ref(false)
 const selectedDay = ref(null)
 const newMeal = ref({
   type: 'Breakfast',
@@ -307,6 +475,20 @@ const newMeal = ref({
   calories: null,
   time: ''
 })
+
+// Edit meal state
+const editMealForm = ref({
+  id: null,
+  type: 'Breakfast',
+  name: '',
+  calories: null,
+  time: ''
+})
+const editMealPreview = ref(null)
+const editMealFile = ref(null)
+const editMealIsUploading = ref(false)
+const editMealDate = ref(null)
+const storage = getStorage()
 
 // Day headers
 const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -526,6 +708,148 @@ async function removeMeal(mealId) {
   } catch (err) {
     console.error('❌ Error removing meal:', err)
     error.value = 'Failed to remove meal. Please try again.'
+  }
+}
+
+// Edit meal functions
+function openEditMealDialog(meal, date) {
+  editMealForm.value = {
+    id: meal.id,
+    type: meal.type || 'Breakfast',
+    name: meal.name || '',
+    calories: meal.calories || null,
+    time: meal.time || ''
+  }
+  editMealPreview.value = meal.imageUrl || null
+  editMealFile.value = null
+  editMealDate.value = date
+  showEditMealDialog.value = true
+}
+
+function closeEditMealDialog() {
+  showEditMealDialog.value = false
+  editMealForm.value = {
+    id: null,
+    type: 'Breakfast',
+    name: '',
+    calories: null,
+    time: ''
+  }
+  editMealPreview.value = null
+  editMealFile.value = null
+  editMealDate.value = null
+}
+
+function handleEditImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  // Validate file size (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image must be less than 5MB'
+    return
+  }
+
+  editMealFile.value = file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editMealPreview.value = e.target?.result
+  }
+  reader.readAsDataURL(file)
+  error.value = ''
+}
+
+function removeEditImage() {
+  editMealPreview.value = null
+  editMealFile.value = null
+}
+
+function getMealTypeEmoji(type) {
+  const emojis = {
+    'Breakfast': '🥞',
+    'Lunch': '🥗',
+    'Dinner': '🍝',
+    'Snack': '🍎'
+  }
+  return emojis[type] || '🍽️'
+}
+
+async function submitEditMeal() {
+  if (!editMealForm.value.name) {
+    error.value = 'Please enter a meal name'
+    return
+  }
+
+  if (!editMealForm.value.calories || editMealForm.value.calories <= 0) {
+    error.value = 'Please enter valid calories'
+    return
+  }
+
+  editMealIsUploading.value = true
+  error.value = ''
+
+  try {
+    let imageUrl = editMealPreview.value && !editMealFile.value ? editMealForm.value.imageUrl : null
+
+    // Upload image if new one selected
+    if (editMealFile.value) {
+      const timestamp = Date.now()
+      const filename = `meals/${editMealForm.value.id}_${timestamp}`
+      const mealStorageRef = storageRef(storage, filename)
+
+      const snapshot = await uploadBytes(mealStorageRef, editMealFile.value)
+      imageUrl = await getDownloadURL(snapshot.ref)
+    }
+
+    // Update meal in Firebase
+    await updateMealPlan(authStore.user.email, editMealForm.value.id, {
+      type: editMealForm.value.type,
+      name: editMealForm.value.name,
+      calories: editMealForm.value.calories,
+      time: editMealForm.value.time,
+      imageUrl: imageUrl || null
+    })
+
+    // Update local array
+    const mealIndex = meals.value.findIndex(m => m.id === editMealForm.value.id)
+    if (mealIndex !== -1) {
+      meals.value[mealIndex] = {
+        ...meals.value[mealIndex],
+        type: editMealForm.value.type,
+        name: editMealForm.value.name,
+        calories: editMealForm.value.calories,
+        time: editMealForm.value.time,
+        imageUrl: imageUrl || meals.value[mealIndex].imageUrl
+      }
+    }
+
+    console.log('✅ Meal updated successfully')
+    closeEditMealDialog()
+  } catch (err) {
+    console.error('Error updating meal:', err)
+    error.value = 'Failed to save meal. Please try again.'
+  } finally {
+    editMealIsUploading.value = false
+  }
+}
+
+async function deleteEditMeal() {
+  if (!confirm('Are you sure you want to delete this meal?')) {
+    return
+  }
+
+  try {
+    // Delete meal from Firebase
+    await deleteMealPlan(authStore.user.email, editMealForm.value.id)
+
+    // Remove from local array
+    meals.value = meals.value.filter(meal => meal.id !== editMealForm.value.id)
+
+    console.log('✅ Meal deleted successfully')
+    closeEditMealDialog()
+  } catch (err) {
+    console.error('Error deleting meal:', err)
+    error.value = 'Failed to delete meal. Please try again.'
   }
 }
 

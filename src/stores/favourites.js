@@ -7,12 +7,16 @@ import {
   isFavouriteRecipe
 } from '@/utils/firestoreUtils'
 import { useAuthStore } from './auth'
+import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore'
 
 export const useFavouritesStore = defineStore('favourites', () => {
+  const db = getFirestore()
+
   // State
   const favourites = ref([])
   const isLoading = ref(false)
   const error = ref(null)
+  let unsubscribe = null
 
   // Getters
   const favouriteCount = computed(() => favourites.value.length)
@@ -30,12 +34,45 @@ export const useFavouritesStore = defineStore('favourites', () => {
     error.value = null
 
     try {
+      // Initial load
       favourites.value = await loadFavouriteRecipes(authStore.userEmail)
+
+      // Set up real-time listener for instant updates
+      setupRealtimeListener(authStore.userEmail)
     } catch (err) {
       error.value = `Failed to load favourites: ${err.message}`
       console.error('Error loading favourites:', err)
     } finally {
       isLoading.value = false
+    }
+  }
+
+  // Set up real-time listener for favourites
+  function setupRealtimeListener(userEmail) {
+    // Unsubscribe from previous listener if exists
+    if (unsubscribe) {
+      unsubscribe()
+    }
+
+    try {
+      const favouritesCol = collection(db, 'users', userEmail, 'favourites')
+      unsubscribe = onSnapshot(favouritesCol, (snapshot) => {
+        const updatedFavourites = []
+        snapshot.forEach((doc) => {
+          const data = doc.data()
+          updatedFavourites.push({
+            id: data.recipeId,
+            title: data.title,
+            image: data.image,
+            readyInMinutes: data.readyInMinutes,
+            aggregateLikes: data.aggregateLikes || 0
+          })
+        })
+        favourites.value = updatedFavourites
+        console.log('✅ Favourites updated in real-time:', updatedFavourites.length)
+      })
+    } catch (err) {
+      console.error('Error setting up real-time listener:', err)
     }
   }
 

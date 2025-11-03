@@ -5,7 +5,7 @@ import UserHome from '../views/UserHome.vue'
 import About from '../views/About.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
-import Dashboard from '../views/Dashboard.vue'
+import Profile from '../views/Profile.vue'
 import FindRecipes from '../views/FindRecipes.vue'
 import RecipeDetail from '../views/RecipeDetail.vue'
 import CalorieTracker from '../views/CalorieTracker.vue'
@@ -46,9 +46,9 @@ const router = createRouter({
       meta: { requiresGuest: true }
     },
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: Dashboard,
+      path: '/profile',
+      name: 'profile',
+      component: Profile,
       meta: { requiresAuth: true }
     },
     {
@@ -98,6 +98,9 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
+  // Scroll to top immediately on navigation
+  window.scrollTo(0, 0)
+
   const authStore = useAuthStore()
 
   // Initialize Firebase auth state and wait for it
