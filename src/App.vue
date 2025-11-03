@@ -120,7 +120,11 @@
             <!-- User Menu (Authenticated) -->
             <div v-if="isAuthenticated" class="relative group flex-shrink-0">
               <button class="flex items-center space-x-3 text-gray-300 hover:text-yellow-400 transition-all duration-300 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 px-4 py-2.5 rounded-full border border-yellow-400/20 hover:border-yellow-400/50 shadow-lg">
-                <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm ring-2 ring-yellow-400/50">
+                <!-- Profile Picture or Avatar -->
+                <div v-if="userPhotoURL" class="w-8 h-8 rounded-full flex items-center justify-center ring-2 ring-yellow-400/50 overflow-hidden">
+                  <img :src="userPhotoURL" :alt="userName" class="w-full h-full object-cover" />
+                </div>
+                <div v-else class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm ring-2 ring-yellow-400/50">
                   {{ userName.charAt(0).toUpperCase() }}
                 </div>
                 <span class="font-semibold">{{ userName }}</span>
@@ -130,7 +134,7 @@
               </button>
               <!-- Dropdown Menu -->
               <div class="absolute right-0 mt-2 w-56 bg-gradient-to-b from-gray-900 to-black rounded-2xl shadow-2xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-yellow-400/30 backdrop-blur-md">
-                <router-link to="/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800/50 hover:text-yellow-400 transition-all duration-200 group/item">
+                <router-link to="/profile" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800/50 hover:text-yellow-400 transition-all duration-200 group/item">
                   <svg class="w-5 h-5 mr-3 text-yellow-400 group-hover/item:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
@@ -231,11 +235,11 @@
             </div>
 
             <div v-if="isAuthenticated" class="space-y-2 pt-4 border-t border-yellow-400/30 mt-4">
-              <router-link to="/dashboard" @click="showMobileMenu = false" class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-yellow-400 hover:bg-gray-900/50 font-semibold transition-all duration-300 rounded-lg">
+              <router-link to="/profile" @click="showMobileMenu = false" class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-yellow-400 hover:bg-gray-900/50 font-semibold transition-all duration-300 rounded-lg">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
-                <span>Dashboard</span>
+                <span>Profile</span>
               </router-link>
               <button @click="handleLogoutMobile" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-300 hover:text-red-400 hover:bg-red-900/20 font-semibold transition-all duration-300 rounded-lg">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -287,6 +291,7 @@ export default {
 
     const isAuthenticated = computed(() => authStore.isAuthenticated)
     const userName = computed(() => authStore.userName)
+    const userPhotoURL = computed(() => authStore.user?.photoURL || '')
     const showMobileMenu = ref(false)
     const isLandingPage = computed(() => route.path === '/')
 
@@ -314,6 +319,7 @@ export default {
     return {
       isAuthenticated,
       userName,
+      userPhotoURL,
       showMobileMenu,
       isLandingPage,
       handleLogout,

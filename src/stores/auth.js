@@ -155,6 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
             name: userCredential.user.displayName,
             email: userCredential.user.email,
             uid: userCredential.user.uid,
+            photoURL: userCredential.user.photoURL || '',
             createdAt: new Date(),
             preferences: {
               dietaryRestrictions: [],

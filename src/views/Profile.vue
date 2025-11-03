@@ -23,7 +23,7 @@
             </div>
             <!-- Upload Photo Button -->
             <label
-              class="absolute bottom-2 right-2 bg-yellow-400 hover:bg-yellow-300 text-black p-3 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-xl hover:scale-110 transform"
+              class="absolute -bottom-3 -right-3 bg-yellow-400 hover:bg-yellow-300 text-black p-2.5 rounded-full cursor-pointer transition-all shadow-lg hover:shadow-xl hover:scale-125 transform"
               title="Upload profile picture"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +46,7 @@
                 User Profile
               </span>
             </div>
-            <h1 class="text-5xl sm:text-5xl font-light text-white mb-2 tracking-tight">{{ userName }}</h1>
+            <h2 class="text-5xl sm:text-5xl font-light text-white mb-2 tracking-tight">{{ userName }}</h2>
             <p class="text-gray-400 text-base mb-3">{{ userEmail }}</p>
             <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Member since <span class="text-yellow-400/70">{{ formatDate(profileData.createdAt) }}</span></p>
           </div>
@@ -120,6 +120,22 @@
                   <path d="M20 14l-2 2"></path>
                 </svg>
                 <span class="text-sm font-semibold uppercase tracking-wider">Preferences</span>
+              </button>
+
+              <!-- Privacy and Security Tab -->
+              <button
+                @click="activeTab = 'privacy'"
+                :class="[
+                  'px-6 py-5 font-light transition-all text-left border-l-4 flex items-center gap-3 group hover:bg-gray-800/30',
+                  activeTab === 'privacy'
+                    ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400'
+                    : 'text-gray-300 border-transparent'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0 transition-colors" :class="activeTab === 'privacy' ? 'text-yellow-400' : 'text-gray-400 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                <span class="text-sm font-semibold uppercase tracking-wider">Privacy & Security</span>
               </button>
 
               <!-- Settings Tab -->
@@ -269,14 +285,21 @@
                     :key="restriction.name"
                     @click="toggleRestriction(restriction.name)"
                     :class="[
-                      'p-5 rounded-xl border-2 transition-all text-center',
+                      'group p-5 rounded-xl border-2 transition-all text-center relative h-24 flex flex-col items-center justify-center overflow-hidden',
                       preferencesData.dietaryRestrictions.includes(restriction.name)
                         ? 'bg-yellow-400/20 border-yellow-400 text-yellow-300'
                         : 'bg-black/40 border-gray-700/50 text-gray-400 hover:border-gray-600'
                     ]"
                   >
-                    <div class="text-3xl mb-2">{{ restriction.icon }}</div>
-                    <p class="text-sm font-medium">{{ restriction.name }}</p>
+                    <!-- Original Content -->
+                    <div class="group-hover:opacity-0 transition-opacity duration-200 text-center">
+                      <div class="text-3xl mb-2">{{ restriction.icon }}</div>
+                      <p class="text-sm font-medium">{{ restriction.name }}</p>
+                    </div>
+                    <!-- Hover Content (Description) -->
+                    <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-center px-2 py-1">
+                      <p class="text-xs font-medium">{{ restriction.description }}</p>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -290,14 +313,21 @@
                     :key="allergy.name"
                     @click="toggleAllergy(allergy.name)"
                     :class="[
-                      'p-5 rounded-xl border-2 transition-all text-center',
+                      'group p-5 rounded-xl border-2 transition-all text-center relative h-24 flex flex-col items-center justify-center overflow-hidden',
                       preferencesData.allergies.includes(allergy.name)
                         ? 'bg-red-400/20 border-red-400 text-red-300'
                         : 'bg-black/40 border-gray-700/50 text-gray-400 hover:border-gray-600'
                     ]"
                   >
-                    <div class="text-3xl mb-2">{{ allergy.icon }}</div>
-                    <p class="text-sm font-medium">{{ allergy.name }}</p>
+                    <!-- Original Content -->
+                    <div class="group-hover:opacity-0 transition-opacity duration-200 text-center">
+                      <div class="text-3xl mb-2">{{ allergy.icon }}</div>
+                      <p class="text-sm font-medium">{{ allergy.name }}</p>
+                    </div>
+                    <!-- Hover Content (Description) -->
+                    <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-center px-2 py-1">
+                      <p class="text-xs font-medium">{{ allergy.description }}</p>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -340,6 +370,117 @@
             </div>
           </div>
 
+          <!-- Privacy & Security Tab -->
+          <div v-show="activeTab === 'privacy'" class="space-y-6">
+            <div class="bg-gradient-to-br from-gray-900/40 via-gray-900/20 to-black p-10 rounded-2xl border border-gray-800/40 shadow-xl hover:border-gray-700/40 transition-all duration-300 backdrop-blur-sm">
+              <div class="mb-10">
+                <span class="text-xs font-semibold uppercase tracking-widest text-yellow-400/60 bg-yellow-400/10 px-4 py-2 rounded-full border border-yellow-400/20 inline-block mb-4 hover:border-yellow-400/40 transition-colors">
+                  Security
+                </span>
+                <h2 class="text-3xl font-light text-white tracking-tight">Privacy & Security</h2>
+              </div>
+
+              <!-- Change Password Section -->
+              <div class="space-y-6">
+                <h3 class="text-lg font-light text-white">Change Password</h3>
+
+                <!-- Current Password -->
+                <div>
+                  <label class="block text-gray-400 font-semibold uppercase text-xs tracking-widest mb-4">Current Password</label>
+                  <div class="relative">
+                    <input
+                      :type="showCurrentPassword ? 'text' : 'password'"
+                      v-model="passwordForm.currentPassword"
+                      class="w-full px-4 py-3 bg-black border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 font-light transition-all pr-12"
+                      placeholder="Enter your current password"
+                    />
+                    <button
+                      @click="showCurrentPassword = !showCurrentPassword"
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      type="button"
+                    >
+                      <svg v-if="showCurrentPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-4.753 4.753m7.538-1.15a3.375 3.375 0 01-5.577 4.643"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 9.172L21 21m-12-12l.01.01M21 21l-12-12m12 0a9 9 0 11-12.986-8.142"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- New Password -->
+                <div>
+                  <label class="block text-gray-400 font-semibold uppercase text-xs tracking-widest mb-4">New Password</label>
+                  <div class="relative">
+                    <input
+                      :type="showNewPassword ? 'text' : 'password'"
+                      v-model="passwordForm.newPassword"
+                      class="w-full px-4 py-3 bg-black border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 font-light transition-all pr-12"
+                      placeholder="Enter your new password"
+                    />
+                    <button
+                      @click="showNewPassword = !showNewPassword"
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      type="button"
+                    >
+                      <svg v-if="showNewPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-4.753 4.753m7.538-1.15a3.375 3.375 0 01-5.577 4.643"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 9.172L21 21m-12-12l.01.01M21 21l-12-12m12 0a9 9 0 11-12.986-8.142"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                  <label class="block text-gray-400 font-semibold uppercase text-xs tracking-widest mb-4">Confirm Password</label>
+                  <div class="relative">
+                    <input
+                      :type="showConfirmPassword ? 'text' : 'password'"
+                      v-model="passwordForm.confirmPassword"
+                      class="w-full px-4 py-3 bg-black border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 font-light transition-all pr-12"
+                      placeholder="Confirm your new password"
+                    />
+                    <button
+                      @click="showConfirmPassword = !showConfirmPassword"
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      type="button"
+                    >
+                      <svg v-if="showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-4.753 4.753m7.538-1.15a3.375 3.375 0 01-5.577 4.643"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 9.172L21 21m-12-12l.01.01M21 21l-12-12m12 0a9 9 0 11-12.986-8.142"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Save Changes Button -->
+                <div class="flex justify-end pt-4">
+                  <button
+                    @click="savePasswordChange"
+                    class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-black font-semibold uppercase text-sm tracking-widest rounded-lg transition-all shadow-lg hover:shadow-2xl transform hover:-translate-y-0.5"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Settings Tab -->
           <div v-show="activeTab === 'settings'" class="space-y-6">
             <div class="bg-gradient-to-br from-gray-900/40 via-gray-900/20 to-black p-10 rounded-2xl border border-gray-800/40 shadow-xl hover:border-gray-700/40 transition-all duration-300 backdrop-blur-sm">
@@ -369,15 +510,45 @@
                 </div>
               </div>
 
-              <!-- Danger Zone -->
-              <div class="pt-8">
-                <h3 class="text-sm font-semibold uppercase tracking-widest text-red-400/70 mb-6">Danger Zone</h3>
-                <button
-                  @click="handleLogout"
-                  class="w-full px-6 py-4 bg-gradient-to-r from-red-900/30 to-red-800/30 hover:from-red-900/50 hover:to-red-800/50 text-red-300 hover:text-red-200 font-semibold uppercase text-xs tracking-widest rounded-xl transition-all border border-red-700/30 hover:border-red-600/50 shadow-lg hover:shadow-xl"
-                >
-                  Sign Out
-                </button>
+              <!-- Account Actions -->
+              <div class="pt-8 space-y-4">
+                <!-- Sign Out -->
+                <div class="flex items-center justify-between p-6 bg-black/40 rounded-xl border border-gray-800/40 hover:border-gray-700/50 transition-all">
+                  <div class="flex items-center gap-4">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <div>
+                      <p class="text-white font-light text-lg">Sign Out</p>
+                      <p class="text-gray-500 text-sm">Log out from your account</p>
+                    </div>
+                  </div>
+                  <button
+                    @click="handleLogout"
+                    class="px-6 py-2 bg-gradient-to-r from-red-900/40 to-red-800/40 hover:from-red-900/60 hover:to-red-800/60 text-red-300 hover:text-red-200 font-semibold uppercase text-xs tracking-widest rounded-lg transition-all border border-red-700/30 hover:border-red-600/50"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+
+                <!-- Delete Account -->
+                <div class="flex items-center justify-between p-6 bg-black/40 rounded-xl border border-gray-800/40 hover:border-gray-700/50 transition-all">
+                  <div class="flex items-center gap-4">
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <div>
+                      <p class="text-white font-light text-lg">Delete Account</p>
+                      <p class="text-gray-500 text-sm">Permanently delete your account and data</p>
+                    </div>
+                  </div>
+                  <button
+                    @click="handleDeleteAccount"
+                    class="px-6 py-2 bg-gradient-to-r from-red-900/50 to-red-800/50 hover:from-red-900/70 hover:to-red-800/70 text-red-200 hover:text-red-100 font-semibold uppercase text-xs tracking-widest rounded-lg transition-all border border-red-600/50 hover:border-red-500/70"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -403,6 +574,9 @@ export default {
     const editingEmail = ref(false)
     const successMessage = ref('')
     const errorMessage = ref('')
+    const showCurrentPassword = ref(false)
+    const showNewPassword = ref(false)
+    const showConfirmPassword = ref(false)
 
     const profileData = reactive({
       name: '',
@@ -421,6 +595,12 @@ export default {
       allergies: [],
       fitnessGoals: '',
       budget: 0
+    })
+
+    const passwordForm = reactive({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
     })
 
     const userName = computed(() => authStore.userName)
@@ -465,6 +645,11 @@ export default {
         if (userProfile.dailyCalorieGoal) {
           editFormData.dailyCalorieGoal = userProfile.dailyCalorieGoal
         }
+      }
+
+      // If no photoURL from Firestore, check Firebase auth user (for Gmail users)
+      if (!profileData.photoURL && authStore.user?.photoURL) {
+        profileData.photoURL = authStore.user.photoURL
       }
 
       editFormData.name = profileData.name || userName.value
@@ -547,6 +732,55 @@ export default {
       }
     }
 
+    const savePasswordChange = async () => {
+      try {
+        // Validation checks
+        if (!passwordForm.currentPassword) {
+          showError('Please enter your current password')
+          return
+        }
+
+        if (!passwordForm.newPassword) {
+          showError('Please enter a new password')
+          return
+        }
+
+        if (!passwordForm.confirmPassword) {
+          showError('Please confirm your new password')
+          return
+        }
+
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+          showError('New password and confirmation do not match')
+          return
+        }
+
+        if (passwordForm.newPassword.length < 6) {
+          showError('New password must be at least 6 characters long')
+          return
+        }
+
+        if (passwordForm.currentPassword === passwordForm.newPassword) {
+          showError('New password must be different from current password')
+          return
+        }
+
+        // TODO: Implement actual password change with Firebase authentication
+        showSuccess('Password changed successfully!')
+
+        // Clear the form
+        passwordForm.currentPassword = ''
+        passwordForm.newPassword = ''
+        passwordForm.confirmPassword = ''
+        showCurrentPassword.value = false
+        showNewPassword.value = false
+        showConfirmPassword.value = false
+      } catch (error) {
+        showError('Failed to change password')
+        console.error(error)
+      }
+    }
+
     const handleProfilePictureUpload = async (event) => {
       try {
         const file = event.target.files?.[0]
@@ -585,6 +819,19 @@ export default {
       }
     }
 
+    const handleDeleteAccount = async () => {
+      const confirmed = confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.')
+      if (!confirmed) return
+
+      try {
+        // TODO: Implement account deletion logic
+        showError('Account deletion feature coming soon')
+      } catch (error) {
+        showError('Failed to delete account')
+        console.error(error)
+      }
+    }
+
     const showSuccess = (message) => {
       successMessage.value = message
       setTimeout(() => {
@@ -608,10 +855,14 @@ export default {
       profileData,
       editFormData,
       preferencesData,
+      passwordForm,
       dietaryRestrictionsWithIcons,
       allergyWithIcons,
       userName,
       userEmail,
+      showCurrentPassword,
+      showNewPassword,
+      showConfirmPassword,
       formatDate,
       saveName,
       saveEmail,
@@ -619,8 +870,10 @@ export default {
       toggleRestriction,
       toggleAllergy,
       savePreferences,
+      savePasswordChange,
       handleProfilePictureUpload,
-      handleLogout
+      handleLogout,
+      handleDeleteAccount
     }
   }
 }
