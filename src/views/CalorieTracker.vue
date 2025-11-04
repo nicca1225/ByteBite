@@ -55,13 +55,21 @@
         {{ localError }}
       </div>
 
-      <!-- Calorie Summary Card with Progress Bar -->
-      <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 mb-8">
+      <!-- Overview Section with Graph and Metrics -->
+      <CalorieTrackerOverview
+        :selectedPeriod="selectedPeriod"
+        @edit="editEntry"
+        @delete="deleteEntry"
+        class="mb-8"
+      />
+
+      <!-- Calorie Summary Card with Progress Bar - Day View Only -->
+      <div v-if="selectedPeriod === 'day'" class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 mb-8">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-light text-white">{{ periodTitle }}</h2>
           <span class="text-sm font-mono text-gray-500 uppercase tracking-wider">{{ periodDate }}</span>
         </div>
-        
+
         <!-- Progress Bar -->
         <div class="h-3 bg-gray-800/50 rounded-full mb-8 overflow-hidden">
             <div
@@ -113,8 +121,8 @@
         </div>
       </div>
 
-      <!-- Log Meal Form & Recent Entries Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Log Meal Form & Recent Entries Layout - Day View Only -->
+      <div v-if="selectedPeriod === 'day'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <!-- Log Meal Form (2/3 width on large screens) -->
         <div class="lg:col-span-2 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-6 sm:p-8 h-fit log-meal-form">
@@ -281,6 +289,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import CalorieTrackerOverview from '@/components/CalorieTrackerOverview.vue';
 import {
   loadTodaysCalorieEntries,
   addCalorieEntry,

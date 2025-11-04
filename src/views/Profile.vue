@@ -562,6 +562,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { updateUserPreferences } from '@/utils/firestoreUtils'
 
 export default {
   name: 'Profile',
@@ -607,25 +608,26 @@ export default {
     const userEmail = computed(() => authStore.userEmail)
 
     const dietaryRestrictionsWithIcons = computed(() => [
-      { name: 'Vegetarian', icon: '🥬', description: 'No meat, poultry, or fish' },
-      { name: 'Vegan', icon: '🌱', description: 'No animal products' },
-      { name: 'Gluten-Free', icon: '🚫', description: 'No gluten/wheat' },
-      { name: 'Dairy-Free', icon: '🥛', description: 'No dairy products' },
-      { name: 'Keto', icon: '⚡', description: 'Low carb, high fat' },
-      { name: 'Low-Carb', icon: '📉', description: 'Reduced carbohydrates' },
-      { name: 'Paleo', icon: '🦴', description: 'Whole foods only' },
-      { name: 'Pescatarian', icon: '🐟', description: 'No meat except fish' }
+      { name: 'vegetarian', icon: '🥬', description: 'No meat, poultry, or fish' },
+      { name: 'vegan', icon: '🌱', description: 'No animal products' },
+      { name: 'paleo', icon: '🦴', description: 'Whole foods only' },
+      { name: 'ketogenic', icon: '⚡', description: 'Low carb, high fat diet' },
+      { name: 'whole30', icon: '📅', description: '30-day elimination diet' }
     ])
 
     const allergyWithIcons = computed(() => [
-      { name: 'Nuts', icon: '🥜', description: 'Tree nuts and peanuts' },
       { name: 'Dairy', icon: '🧀', description: 'Milk and dairy products' },
-      { name: 'Shellfish', icon: '🦐', description: 'Shellfish and crustaceans' },
-      { name: 'Eggs', icon: '🥚', description: 'Chicken eggs' },
+      { name: 'Peanut', icon: '🥜', description: 'Peanuts and peanut products' },
       { name: 'Soy', icon: '🫘', description: 'Soy and soy products' },
+      { name: 'Egg', icon: '🥚', description: 'Chicken eggs' },
+      { name: 'Seafood', icon: '🐟', description: 'Fish and seafood' },
+      { name: 'Sulfite', icon: '⚗️', description: 'Sulfites and preservatives' },
       { name: 'Gluten', icon: '🌾', description: 'Wheat and gluten' },
-      { name: 'Fish', icon: '🐠', description: 'All types of fish' },
-      { name: 'Sesame', icon: '🌰', description: 'Sesame seeds' }
+      { name: 'Sesame', icon: '🌰', description: 'Sesame seeds' },
+      { name: 'Tree Nut', icon: '🌳', description: 'Tree nuts (almonds, walnuts, etc.)' },
+      { name: 'Grain', icon: '🌾', description: 'Grain products' },
+      { name: 'Shellfish', icon: '🦐', description: 'Shellfish and crustaceans' },
+      { name: 'Wheat', icon: '🍞', description: 'Wheat products' }
     ])
 
     onMounted(async () => {
@@ -725,9 +727,21 @@ export default {
 
     const savePreferences = async () => {
       try {
+        if (!authStore.user?.email) {
+          showError('User email not found')
+          return
+        }
+
+        await updateUserPreferences(authStore.user.email, {
+          dietaryRestrictions: preferencesData.dietaryRestrictions,
+          allergies: preferencesData.allergies,
+          budget: preferencesData.budget,
+          fitnessGoals: preferencesData.fitnessGoals
+        })
+
         showSuccess('Preferences saved successfully!')
       } catch (error) {
-        showError('Failed to save preferences')
+        showError('Failed to save preferences: ' + error.message)
         console.error(error)
       }
     }

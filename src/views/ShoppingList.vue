@@ -1,7 +1,7 @@
 <template>
   <main class="min-h-screen bg-black px-4 py-8">
     <div class="max-w-7xl mx-auto">
-      <!-- Header with Title and Actions -->
+      <!-- Header with Title -->
       <div class="mb-8">
         <div class="inline-block mb-4">
           <span class="text-xs font-mono uppercase tracking-wider text-yellow-400/80 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/20">
@@ -10,24 +10,6 @@
         </div>
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-4xl sm:text-5xl font-light text-white">Shopping List</h1>
-          <div class="flex gap-3">
-            <button
-              @click="clearPurchased"
-              class="px-4 py-3 text-gray-300 border border-gray-700/50 rounded-xl hover:border-yellow-400/30 hover:bg-gray-900/50 transition-all duration-300"
-              :disabled="totalPurchased === 0"
-              title="Clear purchased items"
-            >
-              Clear Purchased
-            </button>
-            <button
-              @click="clearAll"
-              class="px-4 py-3 bg-red-900/20 text-red-300 border border-red-500/30 rounded-xl hover:bg-red-900/40 transition-all duration-300"
-              :disabled="totalItems === 0"
-              title="Clear all items"
-            >
-              Clear All
-            </button>
-          </div>
         </div>
       </div>
 
@@ -69,13 +51,23 @@
       </form>
 
       <!-- Kanban Board -->
-      <div v-if="totalItems > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- To Buy Column -->
         <div class="bg-gradient-to-br from-blue-900/20 to-black border border-blue-800/30 rounded-xl overflow-hidden">
           <div class="bg-blue-400/10 border-b border-blue-800/30 px-6 py-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-2xl font-light text-white">To Buy</h2>
-              <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">{{ toBuyItems.length }}</span>
+              <div class="flex items-center gap-3">
+                <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">{{ toBuyItems.length }}</span>
+                <button
+                  @click="clearToBuy"
+                  class="px-3 py-1 text-sm text-gray-300 border border-gray-700/50 rounded-lg hover:border-red-400/50 hover:text-red-300 hover:bg-red-900/20 transition-all duration-300"
+                  :disabled="toBuyItems.length === 0"
+                  title="Clear all 'To Buy' items"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
             <p class="text-blue-300 text-sm font-medium">Total: ${{ toBuyTotal.toFixed(2) }}</p>
           </div>
@@ -173,7 +165,17 @@
           <div class="bg-green-400/10 border-b border-green-800/30 px-6 py-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-2xl font-light text-white">Purchased</h2>
-              <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">{{ purchasedItems.length }}</span>
+              <div class="flex items-center gap-3">
+                <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">{{ purchasedItems.length }}</span>
+                <button
+                  @click="clearPurchased"
+                  class="px-3 py-1 text-sm text-gray-300 border border-gray-700/50 rounded-lg hover:border-red-400/50 hover:text-red-300 hover:bg-red-900/20 transition-all duration-300"
+                  :disabled="purchasedItems.length === 0"
+                  title="Clear all 'Purchased' items"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
             <p class="text-green-300 text-sm font-medium">Total Spent: ${{ purchasedTotal.toFixed(2) }}</p>
           </div>
@@ -283,7 +285,7 @@
           <div>
             <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Total Items</p>
             <p class="text-2xl font-light text-white">{{ totalItems }}</p>
-            <p class="text-sm text-gray-500 mt-1">{{ Math.round((purchasedItems.length / totalItems) * 100) }}% done</p>
+            <p class="text-sm text-gray-500 mt-1">{{ totalItems > 0 ? Math.round((purchasedItems.length / totalItems) * 100) : 0 }}% done</p>
           </div>
           <div>
             <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Grand Total</p>
@@ -292,25 +294,13 @@
           </div>
         </div>
       </div>
-
-      <!-- Empty State -->
-      <div v-else class="text-center py-16 bg-gradient-to-br from-gray-900 to-black rounded-xl border border-gray-800/50">
-        <div class="text-6xl mb-4">🛒</div>
-        <h3 class="text-2xl font-light text-white mb-2">Your shopping list is empty</h3>
-        <p class="text-gray-400 mb-8">Add items manually or find recipes to populate your list</p>
-        <router-link
-          to="/find-recipes"
-          class="inline-block bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-all duration-200"
-        >
-          Find Recipes
-        </router-link>
-      </div>
     </div>
   </main>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { showToast } from '@/utils/toast'
 
 const shoppingList = ref([])
 const newItem = ref({
@@ -392,20 +382,26 @@ const removeItem = (id) => {
   saveShoppingList()
 }
 
-const clearAll = () => {
-  if (totalItems.value === 0) return
-  if (confirm('Are you sure you want to clear all items from your shopping list?')) {
-    shoppingList.value = []
-    saveShoppingList()
-  }
+const clearToBuy = () => {
+  if (toBuyItems.value.length === 0) return
+
+  const count = toBuyItems.value.length
+  shoppingList.value = shoppingList.value.filter(item => item.purchased)
+  saveShoppingList()
+  syncToBudgetTracker()
+
+  showToast(`Cleared ${count} 'To Buy' items`, 'success')
 }
 
 const clearPurchased = () => {
-  if (totalPurchased.value === 0) return
-  if (confirm(`Remove ${totalPurchased.value} purchased items?`)) {
-    shoppingList.value = shoppingList.value.filter(item => !item.purchased)
-    saveShoppingList()
-  }
+  if (purchasedItems.value.length === 0) return
+
+  const count = purchasedItems.value.length
+  shoppingList.value = shoppingList.value.filter(item => !item.purchased)
+  saveShoppingList()
+  syncToBudgetTracker()
+
+  showToast(`Cleared ${count} purchased items`, 'success')
 }
 
 const toBuyItems = computed(() =>

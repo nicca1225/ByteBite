@@ -250,7 +250,7 @@
                 </div>
 
                 <div class="bg-gray-800/20 border border-gray-800/30 rounded-lg p-3">
-                  <p class="text-xs text-gray-400 mb-1">~Per Day</p>
+                  <p class="text-xs text-gray-400 mb-1">~Budget Per Day</p>
                   <p class="text-lg font-medium text-blue-400">{{ formatCurrency(dailyBudget) }}</p>
                 </div>
               </div>
@@ -510,7 +510,8 @@ const calendarDays = computed(() => {
   for (let i = 1; i <= lastDayOfMonth; i++) {
     const date = new Date(year, month, i)
     date.setHours(0, 0, 0, 0)
-    const dateString = date.toISOString().split('T')[0]
+    // Format date as YYYY-MM-DD using local time (not UTC)
+    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
     const isSelected = newExpense.value.date === dateString
     const isToday = date.getTime() === today.getTime()
 

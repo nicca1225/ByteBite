@@ -28,51 +28,82 @@ export const useFavouritesStore = defineStore('favourites', () => {
   // Actions
   async function loadFavourites() {
     const authStore = useAuthStore()
-    if (!authStore.isAuthenticated) return
+    console.log('🔐 Auth check - isAuthenticated:', authStore.isAuthenticated)
+    console.log('👤 User email:', authStore.userEmail)
+
+    if (!authStore.isAuthenticated) {
+      console.warn('⚠️ User not authenticated, skipping load')
+      return
+    }
 
     isLoading.value = true
     error.value = null
 
     try {
-      // Initial load
-      favourites.value = await loadFavouriteRecipes(authStore.userEmail)
-
-      // Set up real-time listener for instant updates
+      // Set up real-time listener FIRST for instant updates
+      // This will keep the data in sync continuously
       setupRealtimeListener(authStore.userEmail)
+
+      // Then do initial load as fallback (in case listener hasn't fired yet)
+      console.log('📥 Starting loadFavouriteRecipes...')
+      const loadedRecipes = await loadFavouriteRecipes(authStore.userEmail)
+      console.log('📥 Loaded recipes from DB:', loadedRecipes)
+
+      // Always use the loaded recipes - it's more reliable than waiting for listener
+      if (favourites.value.length === 0 && loadedRecipes.length > 0) {
+        console.log('⏳ Setting initial load data')
+        favourites.value = loadedRecipes
+      }
+      console.log('✅ Favourites state final:', favourites.value)
+
+      // Wait a bit for real-time listener to fire and take over
+      await new Promise(resolve => setTimeout(resolve, 500))
     } catch (err) {
       error.value = `Failed to load favourites: ${err.message}`
-      console.error('Error loading favourites:', err)
+      console.error('❌ Error loading favourites:', err)
     } finally {
       isLoading.value = false
+      console.log('🏁 Loading complete. Final state:', favourites.value.length)
     }
   }
 
   // Set up real-time listener for favourites
   function setupRealtimeListener(userEmail) {
+    console.log('🔔 Setting up real-time listener for:', userEmail)
+
     // Unsubscribe from previous listener if exists
     if (unsubscribe) {
+      console.log('🔕 Unsubscribing from previous listener')
       unsubscribe()
     }
 
     try {
-      const favouritesCol = collection(db, 'users', userEmail, 'favourites')
+      const favouritesCol = collection(db, 'users', userEmail, 'favouriteRecipes')
+      console.log('📍 Listening to collection:', `users/${userEmail}/favouriteRecipes`)
+
       unsubscribe = onSnapshot(favouritesCol, (snapshot) => {
+        console.log('🔄 Real-time listener snapshot received, docs count:', snapshot.docs.length)
+
         const updatedFavourites = []
         snapshot.forEach((doc) => {
           const data = doc.data()
+          console.log('📄 Processing doc:', doc.id, 'data:', data)
+
           updatedFavourites.push({
-            id: data.recipeId,
+            id: data.id,
             title: data.title,
             image: data.image,
             readyInMinutes: data.readyInMinutes,
             aggregateLikes: data.aggregateLikes || 0
           })
         })
+
+        console.log('📊 Transformed favourites:', updatedFavourites)
         favourites.value = updatedFavourites
         console.log('✅ Favourites updated in real-time:', updatedFavourites.length)
       })
     } catch (err) {
-      console.error('Error setting up real-time listener:', err)
+      console.error('❌ Error setting up real-time listener:', err)
     }
   }
 

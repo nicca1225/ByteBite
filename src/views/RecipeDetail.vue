@@ -25,14 +25,23 @@
         <aside class="lg:col-span-1 space-y-6">
           <!-- Ingredients -->
           <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800/50 p-6">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col gap-3 mb-4">
               <h2 class="text-xl font-light text-white">Ingredients</h2>
-              <button
-                @click="addToShoppingList"
-                class="px-3 py-2 bg-yellow-400 text-black text-sm font-medium rounded-lg hover:bg-yellow-300 transition-colors"
-              >
-                + Shopping List
-              </button>
+              <div class="flex gap-2">
+                <button
+                  @click="addToShoppingList"
+                  class="flex-1 px-3 py-2 bg-yellow-400 text-black text-sm font-medium rounded-lg hover:bg-yellow-300 transition-colors"
+                >
+                  + Shopping List
+                </button>
+                <button
+                  v-if="authStore.isAuthenticated"
+                  @click="addToMealPlanner"
+                  class="flex-1 px-3 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-400 transition-colors"
+                >
+                  + Meal Planner
+                </button>
+              </div>
             </div>
             <ul class="space-y-3">
               <li v-for="ing in recipe.extendedIngredients" :key="ing.id"
@@ -286,5 +295,46 @@ async function addToShoppingList() {
     console.error('Error adding to shopping list:', error)
     showToast('Failed to add ingredients. Please try again.', 'error')
   }
+}
+
+function addToMealPlanner() {
+  if (!recipe.value) return
+
+  // Extract calorie information from nutrition data
+  let calories = 0
+  if (recipe.value.nutrition?.nutrients) {
+    const calorieNutrient = recipe.value.nutrition.nutrients.find(n => n.name.toLowerCase() === 'calories')
+    if (calorieNutrient) {
+      calories = Math.round(calorieNutrient.amount)
+    }
+  }
+
+  // If no calories found, try to estimate based on servings
+  if (calories === 0 && recipe.value.nutrition?.nutrients) {
+    const proteinNutrient = recipe.value.nutrition.nutrients.find(n => n.name.toLowerCase() === 'protein')
+    const fatNutrient = recipe.value.nutrition.nutrients.find(n => n.name.toLowerCase() === 'fat')
+    const carbNutrient = recipe.value.nutrition.nutrients.find(n => n.name.toLowerCase() === 'carbohydrates')
+
+    // Protein and carbs = 4 cal/g, fat = 9 cal/g
+    const protein = proteinNutrient?.amount || 0
+    const fat = fatNutrient?.amount || 0
+    const carbs = carbNutrient?.amount || 0
+    calories = Math.round((protein * 4) + (fat * 9) + (carbs * 4))
+  }
+
+  // Store recipe data in sessionStorage to pass to PlanMeal
+  const recipeData = {
+    name: recipe.value.title,
+    calories: calories,
+    imageUrl: recipe.value.image,
+    recipeId: recipe.value.id,
+    readyInMinutes: recipe.value.readyInMinutes
+  }
+
+  sessionStorage.setItem('mealPlannerRecipe', JSON.stringify(recipeData))
+
+  // Navigate to meal planner
+  router.push('/plan-meal')
+  showToast(`"${recipe.value.title}" added to meal planner!`, 'success')
 }
 </script>

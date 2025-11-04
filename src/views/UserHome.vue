@@ -136,7 +136,7 @@
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
               </div>
-              <h3 class="text-base font-medium text-white mb-1 group-hover:text-yellow-400 transition-colors">Favourites</h3>
+              <h3 class="text-base font-medium text-white mb-1 group-hover:text-yellow-400 transition-colors">Saved</h3>
               <p class="text-gray-500 text-sm font-light">View saved recipes</p>
             </div>
           </button>

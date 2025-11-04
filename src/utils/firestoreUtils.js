@@ -464,11 +464,16 @@ export async function loadFavouriteRecipes(userEmail) {
 
     const querySnapshot = await getDocs(q);
 
-    const recipes = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      savedAt: doc.data().savedAt?.toMillis() || Date.now(),
-    }));
+    const recipes = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.id,
+        title: data.title,
+        image: data.image,
+        readyInMinutes: data.readyInMinutes,
+        aggregateLikes: data.aggregateLikes || 0
+      };
+    });
 
     console.log('✅ Loaded', recipes.length, 'favourite recipes');
     return recipes;
@@ -648,5 +653,41 @@ export async function updateDailyCalorieGoal(userEmail, goal) {
   } catch (error) {
     console.error('❌ Error updating daily calorie goal:', error);
     throw new Error(`Failed to update daily calorie goal: ${error.message}`);
+  }
+}
+
+/**
+ * Update user dietary preferences
+ * @param {string} userEmail - User email address
+ * @param {Object} preferencesData - { dietaryRestrictions: [], allergies: [], budget: number, fitnessGoals: string }
+ * @returns {Promise<void>}
+ */
+export async function updateUserPreferences(userEmail, preferencesData) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      throw new Error('User email is required');
+    }
+
+    console.log('📝 Updating user preferences for:', userEmail);
+    console.log('Preferences:', preferencesData);
+
+    const userRef = doc(db, 'users', userEmail);
+
+    // Use setDoc with merge: true to update preferences while keeping other user data
+    await setDoc(userRef, {
+      preferences: {
+        dietaryRestrictions: preferencesData.dietaryRestrictions || [],
+        allergies: preferencesData.allergies || [],
+        budget: preferencesData.budget || 0,
+        fitnessGoals: preferencesData.fitnessGoals || '',
+      },
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    console.log('✅ User preferences updated successfully');
+  } catch (error) {
+    console.error('❌ Error updating user preferences:', error);
+    throw new Error(`Failed to update preferences: ${error.message}`);
   }
 }
