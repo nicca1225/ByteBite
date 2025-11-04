@@ -27,6 +27,17 @@
         {{ error }}
       </div>
 
+      <!-- Recipe Selection Prompt -->
+      <div v-if="isSelectingDayForRecipe && recipeFromSession" class="bg-green-900/20 text-green-300 p-4 rounded-xl mb-6 border border-green-500/30 flex items-center gap-3">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <p class="font-medium">Click on a day to add "<strong>{{ recipeFromSession.name }}</strong>" to your meal plan</p>
+          <p class="text-sm text-green-300/70 mt-1">Calories: {{ recipeFromSession.calories }} kcal</p>
+        </div>
+      </div>
+
       <!-- Loading State -->
       <div v-if="isLoading" class="flex justify-center py-20">
         <div class="w-12 h-12 border-4 border-gray-800 border-t-yellow-400 rounded-full animate-spin" aria-label="Loading"></div>
@@ -449,11 +460,16 @@ import {
   addMealPlan,
   updateMealPlan,
   deleteMealPlan,
+  addCalorieEntry,
+  deleteCalorieEntry,
 } from '@/utils/firestoreUtils'
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 // Auth store
 const authStore = useAuthStore()
+
+// Recipe data from RecipeDetail (if user clicked "Add to Meal Planner")
+const recipeFromSession = ref(null)
 
 // Current month/year
 const currentMonth = ref(new Date().getMonth())
@@ -469,6 +485,8 @@ const showDayDetail = ref(false)
 const showAddMealDialog = ref(false)
 const showEditMealDialog = ref(false)
 const selectedDay = ref(null)
+const isSelectingDayForRecipe = ref(false)
+
 const newMeal = ref({
   type: 'Breakfast',
   name: '',
@@ -627,6 +645,20 @@ function goToToday() {
 function openDayDetail(day) {
   selectedDay.value = day
   showDayDetail.value = true
+
+  // If user was adding a recipe from RecipeDetail, pre-fill and open the add meal dialog
+  if (isSelectingDayForRecipe.value && recipeFromSession.value) {
+    console.log('🎯 Day selected for recipe, opening add meal dialog with pre-filled data')
+    newMeal.value.name = recipeFromSession.value.name
+    newMeal.value.calories = recipeFromSession.value.calories
+    newMeal.value.type = 'Breakfast' // Default meal type
+    newMeal.value.time = ''
+
+    // Open the add meal dialog after a short delay to ensure day detail is ready
+    setTimeout(() => {
+      showAddMealDialog.value = true
+    }, 100)
+  }
 }
 
 function closeDayDetail() {
@@ -646,6 +678,12 @@ function closeAddMealDialog() {
     name: '',
     calories: null,
     time: ''
+  }
+
+  // Reset recipe selection if closing without adding
+  if (isSelectingDayForRecipe.value) {
+    isSelectingDayForRecipe.value = false
+    recipeFromSession.value = null
   }
 }
 
@@ -681,6 +719,46 @@ async function addMeal() {
 
     meals.value.push(meal)
     console.log('✅ Meal added successfully')
+
+    // Also add to CalorieTracker automatically
+    // Only add to calorie tracker if the meal is for today or earlier
+    // Parse date string properly to avoid timezone issues
+    const [year, month, day] = selectedDay.value.date.split('-')
+    const mealDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    mealDate.setHours(0, 0, 0, 0)
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    console.log('🔍 Debug - Meal date:', selectedDay.value.date, 'Parsed:', mealDate, 'Today:', today, 'Should add calories:', mealDate.getTime() <= today.getTime())
+
+    if (mealDate.getTime() <= today.getTime()) {
+      try {
+        console.log('📊 Adding calorie entry for meal:', newMeal.value.name, 'Calories:', newMeal.value.calories)
+        const calorieValue = newMeal.value.calories ? parseInt(newMeal.value.calories) : 0
+        console.log('📊 Calorie value to add:', calorieValue)
+
+        await addCalorieEntry(authStore.user.email, {
+          food: newMeal.value.name,
+          calories: calorieValue,
+          mealType: newMeal.value.type || 'Meal'
+        })
+        console.log('✅ Calorie entry added automatically')
+      } catch (calorieErr) {
+        console.error('❌ Error adding calorie entry:', calorieErr)
+        console.warn('⚠️ Could not add calorie entry:', calorieErr)
+        // Don't fail the meal addition if calorie entry fails
+      }
+    } else {
+      console.log('ℹ️ Meal is for future date, skipping calorie tracker auto-sync')
+    }
+
+    // Reset recipe selection after successful addition
+    if (isSelectingDayForRecipe.value) {
+      isSelectingDayForRecipe.value = false
+      recipeFromSession.value = null
+      console.log('✅ Recipe successfully added to meal planner and synced to calorie tracker')
+    }
   } catch (err) {
     console.error('❌ Error adding meal:', err)
     error.value = 'Failed to add meal. Please try again.'
@@ -699,12 +777,22 @@ async function removeMeal(mealId) {
     error.value = null
     console.log('🗑️ Removing meal:', mealId)
 
+    // Find the meal to get its details before deleting
+    const mealToDelete = meals.value.find(m => m.id === mealId)
+
     // Delete from Firebase
     await deleteMealPlan(authStore.user.email, mealId)
 
     // Remove from local array
     meals.value = meals.value.filter(meal => meal.id !== mealId)
     console.log('✅ Meal removed successfully')
+
+    // Note: We cannot automatically remove from CalorieTracker without storing a reference
+    // Users should manually remove entries from CalorieTracker if they change their mind
+    // This prevents accidental deletion of manually logged entries with the same name
+    if (mealToDelete) {
+      console.log('ℹ️ Meal deleted. Note: You may want to check CalorieTracker if this meal was for today.')
+    }
   } catch (err) {
     console.error('❌ Error removing meal:', err)
     error.value = 'Failed to remove meal. Please try again.'
@@ -855,6 +943,20 @@ async function deleteEditMeal() {
 
 // Lifecycle hook
 onMounted(() => {
+  // Check if there's recipe data from RecipeDetail
+  const recipeData = sessionStorage.getItem('mealPlannerRecipe')
+  if (recipeData) {
+    try {
+      recipeFromSession.value = JSON.parse(recipeData)
+      isSelectingDayForRecipe.value = true
+      // Clear the session storage
+      sessionStorage.removeItem('mealPlannerRecipe')
+      console.log('📋 Waiting for user to select a day for recipe:', recipeFromSession.value.name)
+    } catch (err) {
+      console.error('Error parsing recipe data:', err)
+    }
+  }
+
   loadMealsFromFirebase()
 })
 </script>

@@ -391,6 +391,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { updateUserPreferences } from '@/utils/firestoreUtils'
 
 export default {
   name: 'Profile',
@@ -540,9 +541,21 @@ export default {
 
     const savePreferences = async () => {
       try {
+        if (!authStore.user?.email) {
+          showError('User email not found')
+          return
+        }
+
+        await updateUserPreferences(authStore.user.email, {
+          dietaryRestrictions: preferencesData.dietaryRestrictions,
+          allergies: preferencesData.allergies,
+          budget: preferencesData.budget,
+          fitnessGoals: preferencesData.fitnessGoals
+        })
+
         showSuccess('Preferences saved successfully!')
       } catch (error) {
-        showError('Failed to save preferences')
+        showError('Failed to save preferences: ' + error.message)
         console.error(error)
       }
     }

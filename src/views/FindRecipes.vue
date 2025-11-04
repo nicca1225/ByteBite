@@ -33,7 +33,7 @@
 </form>
 
 <!-- Toggle BELOW the bar -->
-<div class="flex justify-start">
+<div class="flex justify-start gap-2">
   <button
     type="button"
     class="text-sm px-3 py-2 rounded-lg border border-gray-800/50 text-yellow-400 hover:text-yellow-300 hover:border-yellow-400/50 transition-colors"
@@ -43,6 +43,15 @@
   >
     {{ filtersOpen ? 'Hide Filters' : 'Show Filters' }}
   </button>
+  <button
+    type="button"
+    @click="applyDietaryPreferences"
+    :disabled="loadingPreferences"
+    class="text-sm px-3 py-2 rounded-lg border border-gray-800/50 text-green-400 hover:text-green-300 hover:border-green-400/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    title="Apply your dietary preferences from your profile"
+  >
+    {{ loadingPreferences ? 'Loading...' : 'Apply Preferences' }}
+  </button>
 </div>
 
 <!-- Filters panel BELOW the toggle -->
@@ -51,43 +60,46 @@
   id="filters-initial"
   class="mt-3 bg-gradient-to-br from-gray-900/50 to-black/50 border border-gray-800/50 rounded-xl p-6 backdrop-blur-sm"
 >
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <!-- Calories -->
-    <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Min Calories</label>
-      <input type="number" min="0" v-model.number="minCalories"
-             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
-             placeholder="0" />
-    </div>
-    <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Max Calories</label>
-      <input type="number" min="0" v-model.number="maxCalories"
-             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
-             placeholder="9999" />
+  <div class="space-y-4">
+    <!-- Calories Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Min Calories</label>
+        <input type="number" min="0" v-model.number="minCalories"
+               class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+               placeholder="0" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Max Calories</label>
+        <input type="number" min="0" v-model.number="maxCalories"
+               class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+               placeholder="9999" />
+      </div>
     </div>
 
-    <!-- Ingredients -->
-    <div class="md:col-span-2">
+    <!-- Include Ingredients -->
+    <div>
       <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Include Ingredients (comma-separated)</label>
       <input v-model.trim="includeIngredients" placeholder="e.g. chicken, rice"
              class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" />
     </div>
 
-    <!-- Diet / Intolerances / Type -->
+    <!-- Diet -->
     <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Diet</label>
-      <select v-model="diet" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
-        <option value="">(Any)</option>
-        <option>vegetarian</option><option>vegan</option>
-        <option>paleo</option><option>ketogenic</option><option>whole30</option>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Diet (Select multiple)</label>
+      <select v-model="diet" multiple class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
+        <option value="vegetarian">vegetarian</option>
+        <option value="vegan">vegan</option>
+        <option value="paleo">paleo</option>
+        <option value="ketogenic">ketogenic</option>
+        <option value="whole30">whole30</option>
       </select>
     </div>
+
+    <!-- Allergies -->
     <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Allergies</label>
-      <!-- <input v-model.trim="intolerances" placeholder="e.g. gluten, dairy, peanut"
-             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" /> -->
-      <select v-model="intolerances" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
-        <option value="">(Any)</option>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Allergies (Select multiple)</label>
+      <select v-model="intolerances" multiple class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="Dairy">Dairy</option>
         <option value="Peanut">Peanut</option>
         <option value="Soy">Soy</option>
@@ -102,6 +114,8 @@
         <option value="Wheat">Wheat</option>
       </select>
     </div>
+
+    <!-- Type -->
     <div>
       <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Type</label>
       <select v-model="type" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
@@ -166,7 +180,7 @@
 </form>
 
 <!-- Toggle BELOW the bar, same width as the form -->
-<div class="max-w-6xl mx-auto mt-3">
+<div class="max-w-6xl mx-auto mt-3 flex gap-2">
   <button
     type="button"
     class="text-sm px-3 py-2 rounded-lg border border-gray-800/50 text-yellow-400 hover:text-yellow-300 hover:border-yellow-400/50 transition-colors"
@@ -176,6 +190,15 @@
   >
     {{ filtersOpen ? 'Hide Filters' : 'Show Filters' }}
   </button>
+  <button
+    type="button"
+    @click="applyDietaryPreferences"
+    :disabled="loadingPreferences"
+    class="text-sm px-3 py-2 rounded-lg border border-gray-800/50 text-green-400 hover:text-green-300 hover:border-green-400/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    title="Apply your dietary preferences from your profile"
+  >
+    {{ loadingPreferences ? 'Loading...' : 'Apply Preferences' }}
+  </button>
 </div>
 
 <!-- Filters panel BELOW the toggle -->
@@ -184,43 +207,46 @@
   id="filters-sticky"
   class="max-w-6xl mx-auto mt-3 bg-gradient-to-br from-gray-900/50 to-black/50 border border-gray-800/50 rounded-xl p-6 backdrop-blur-sm"
 >
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <!-- Calories -->
-    <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Min Calories</label>
-      <input type="number" min="0" v-model.number="minCalories"
-             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
-             placeholder="0" />
-    </div>
-    <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Max Calories</label>
-      <input type="number" min="0" v-model.number="maxCalories"
-             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
-             placeholder="9999" />
+  <div class="space-y-4">
+    <!-- Calories Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Min Calories</label>
+        <input type="number" min="0" v-model.number="minCalories"
+               class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+               placeholder="0" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Max Calories</label>
+        <input type="number" min="0" v-model.number="maxCalories"
+               class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light"
+               placeholder="9999" />
+      </div>
     </div>
 
-    <!-- Ingredients -->
-    <div class="md:col-span-2">
+    <!-- Include Ingredients -->
+    <div>
       <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Include Ingredients (comma-separated)</label>
       <input v-model.trim="includeIngredients" placeholder="e.g. chicken, rice"
              class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" />
     </div>
 
-    <!-- Diet / Intolerances / Type -->
+    <!-- Diet -->
     <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Diet</label>
-      <select v-model="diet" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
-        <option value="">(Any)</option>
-        <option>vegetarian</option><option>vegan</option>
-        <option>paleo</option><option>ketogenic</option><option>whole30</option>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Diet (Select multiple)</label>
+      <select v-model="diet" multiple class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
+        <option value="vegetarian">vegetarian</option>
+        <option value="vegan">vegan</option>
+        <option value="paleo">paleo</option>
+        <option value="ketogenic">ketogenic</option>
+        <option value="whole30">whole30</option>
       </select>
     </div>
+
+    <!-- Allergies -->
     <div>
-      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Allergies</label>
-      <!-- <input v-model.trim="intolerances" placeholder="e.g. gluten, dairy, peanut"
-             class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light" /> -->
-      <select v-model="intolerances" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
-        <option value="">(Any)</option>
+      <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Allergies (Select multiple)</label>
+      <select v-model="intolerances" multiple class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
         <option value="Dairy">Dairy</option>
         <option value="Peanut">Peanut</option>
         <option value="Soy">Soy</option>
@@ -235,6 +261,8 @@
         <option value="Wheat">Wheat</option>
       </select>
     </div>
+
+    <!-- Type -->
     <div>
       <label class="block text-xs text-gray-400 uppercase tracking-wider font-mono mb-2">Type</label>
       <select v-model="type" class="w-full px-4 py-2.5 bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors font-light">
@@ -326,6 +354,8 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFavouritesStore } from '@/stores/favourites'
 import { useAuthStore } from '@/stores/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 
 const router = useRouter()
 const apiKey = import.meta.env.VITE_SPOONACULAR_API_KEY || ''
@@ -346,13 +376,14 @@ const error = ref('')
 const searched = ref(false)
 const hasSearched = ref(false)
 const filtersOpen = ref(false)
+const loadingPreferences = ref(false)
 
 const minCalories = ref(null)
 const maxCalories = ref(null)
 const includeIngredients = ref('')
 const excludeIngredients = ref('')
-const diet = ref('')
-const intolerances = ref('')
+const diet = ref([])
+const intolerances = ref([])
 const type = ref('')
 
 // Helper function to check if any filters are set
@@ -363,10 +394,68 @@ function hasActiveFilters() {
     (maxCalories.value != null && maxCalories.value !== '') ||
     includeIngredients.value ||
     excludeIngredients.value ||
-    diet.value ||
-    intolerances.value ||
+    diet.value.length > 0 ||
+    intolerances.value.length > 0 ||
     type.value
   )
+}
+
+// Apply dietary preferences from user profile
+async function applyDietaryPreferences() {
+  try {
+    loadingPreferences.value = true
+    error.value = ''
+
+    if (!authStore.user) {
+      error.value = 'You must be logged in to apply preferences.'
+      loadingPreferences.value = false
+      return
+    }
+
+    // Fetch user preferences from Firestore
+    const userRef = doc(db, 'users', authStore.user.email)
+    const userSnapshot = await getDoc(userRef)
+
+    if (!userSnapshot.exists()) {
+      error.value = 'Could not find your profile. Please update your preferences first.'
+      loadingPreferences.value = false
+      return
+    }
+
+    const userData = userSnapshot.data()
+    const preferences = userData?.preferences || {}
+    const dietaryRestrictions = preferences.dietaryRestrictions || []
+    const allergies = preferences.allergies || []
+
+    console.log('Fetched preferences:', { dietaryRestrictions, allergies })
+
+    // Clear current filters
+    diet.value = []
+    intolerances.value = []
+
+    // Apply dietary restrictions directly (they now match the API diet options)
+    // Profile diets: vegetarian, vegan, paleo, ketogenic, whole30
+    diet.value = [...dietaryRestrictions]
+
+    // Apply allergies directly (they now match the API intolerance options)
+    // Profile allergies: Dairy, Peanut, Soy, Egg, Seafood, Sulfite, Gluten, Sesame, Tree Nut, Grain, Shellfish, Wheat
+    intolerances.value = [...allergies]
+
+    // Auto-open filters if we applied anything
+    if (diet.value.length > 0 || intolerances.value.length > 0) {
+      filtersOpen.value = true
+    }
+
+    if (diet.value.length === 0 && intolerances.value.length === 0) {
+      error.value = 'No dietary preferences set in your profile.'
+    }
+
+  } catch (err) {
+    console.error('Error applying preferences:', err)
+    error.value = 'Failed to apply your preferences. Please try again.'
+  } finally {
+    loadingPreferences.value = false
+  }
 }
 
 async function onSearch() {
@@ -409,8 +498,8 @@ async function onSearch() {
     if (maxCalories.value != null && maxCalories.value !== '') params.set('maxCalories', String(maxCalories.value))
     if (includeIngredients.value) params.set('includeIngredients', includeIngredients.value)
     if (excludeIngredients.value) params.set('excludeIngredients', excludeIngredients.value)
-    if (diet.value) params.set('diet', diet.value)
-    if (intolerances.value) params.set('intolerances', intolerances.value)
+    if (diet.value.length > 0) params.set('diet', diet.value.join(','))
+    if (intolerances.value.length > 0) params.set('intolerances', intolerances.value.join(','))
     if (type.value) params.set('type', type.value)
 
     const url = `https://api.spoonacular.com/recipes/complexSearch?${params}`

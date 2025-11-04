@@ -655,3 +655,39 @@ export async function updateDailyCalorieGoal(userEmail, goal) {
     throw new Error(`Failed to update daily calorie goal: ${error.message}`);
   }
 }
+
+/**
+ * Update user dietary preferences
+ * @param {string} userEmail - User email address
+ * @param {Object} preferencesData - { dietaryRestrictions: [], allergies: [], budget: number, fitnessGoals: string }
+ * @returns {Promise<void>}
+ */
+export async function updateUserPreferences(userEmail, preferencesData) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      throw new Error('User email is required');
+    }
+
+    console.log('📝 Updating user preferences for:', userEmail);
+    console.log('Preferences:', preferencesData);
+
+    const userRef = doc(db, 'users', userEmail);
+
+    // Use setDoc with merge: true to update preferences while keeping other user data
+    await setDoc(userRef, {
+      preferences: {
+        dietaryRestrictions: preferencesData.dietaryRestrictions || [],
+        allergies: preferencesData.allergies || [],
+        budget: preferencesData.budget || 0,
+        fitnessGoals: preferencesData.fitnessGoals || '',
+      },
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    console.log('✅ User preferences updated successfully');
+  } catch (error) {
+    console.error('❌ Error updating user preferences:', error);
+    throw new Error(`Failed to update preferences: ${error.message}`);
+  }
+}
