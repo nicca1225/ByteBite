@@ -81,7 +81,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="$emit('delete', entry.id)"
+                  @click="$emit('delete', entry)"
                   class="p-1 text-gray-400 hover:text-red-400 transition-colors"
                   title="Delete"
                 >
@@ -128,7 +128,7 @@
                     </svg>
                   </button>
                   <button
-                    @click="$emit('delete', entry.id)"
+                    @click="$emit('delete', entry)"
                     class="p-0.5 text-gray-400 hover:text-red-400 transition-colors"
                     title="Delete"
                   >
@@ -151,7 +151,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
 import { useAuthStore } from '@/stores/auth';
-import { loadCalorieEntriesByPeriod } from '@/utils/firestoreUtils';
+import { useCalorieStore } from '@/stores/calorieStore';
 
 // Props
 const props = defineProps({
@@ -167,12 +167,23 @@ defineEmits(['edit', 'delete']);
 
 // State
 const authStore = useAuthStore();
+const calorieStore = useCalorieStore();
 const isLoadingChart = ref(true);
 const chartReady = ref(false);
 const chartSeries = ref([]);
 const chartOptions = ref({});
 const calorieData = ref([]);
-const entries = ref([]);
+
+// Get entries from store based on period
+const entries = computed(() => {
+  if (props.selectedPeriod === 'week') {
+    return calorieStore.thisWeekEntries;
+  } else if (props.selectedPeriod === 'month') {
+    return calorieStore.thisMonthEntries;
+  } else {
+    return calorieStore.todaysEntries;
+  }
+});
 
 // Computed Properties
 const weekEntriesGrouped = computed(() => {
@@ -203,16 +214,19 @@ const weekEntriesGrouped = computed(() => {
       dayName: dayNames[i],
       entries: dayEntries.map(entry => ({
         id: entry.id,
+        food: entry.food || 'Unknown',
         name: entry.food || 'Unknown',
         mealType: entry.mealType || 'Meal',
         calories: entry.calories,
+        timestamp: entry.timestamp,
+        linkedMealId: entry.linkedMealId || null,
       })),
       totalCalories,
     });
   }
 
   return grouped;
-});
+})
 
 const monthEntriesGrouped = computed(() => {
   if (props.selectedPeriod !== 'month') return [];
@@ -242,9 +256,12 @@ const monthEntriesGrouped = computed(() => {
       dayName: dayNames[dayOfWeek],
       entries: dayEntries.map(entry => ({
         id: entry.id,
+        food: entry.food || 'Unknown',
         name: entry.food || 'Unknown',
         mealType: entry.mealType || 'Meal',
         calories: entry.calories,
+        timestamp: entry.timestamp,
+        linkedMealId: entry.linkedMealId || null,
       })),
       totalCalories,
     });
@@ -256,19 +273,14 @@ const monthEntriesGrouped = computed(() => {
 // Methods
 async function loadChartData() {
   try {
-    if (!authStore.user) {
-      console.error('No user logged in');
-      isLoadingChart.value = false;
-      return;
-    }
-
     isLoadingChart.value = true;
-    const loadedEntries = await loadCalorieEntriesByPeriod(authStore.user.email, props.selectedPeriod);
-    entries.value = loadedEntries; // Store entries for the computed properties
+
+    // Get entries from store - no need to load, they're already synced
+    const loadedEntries = entries.value;
 
     // Process entries into daily data
     const dailyMap = new Map();
-    const baseGoal = 2000;
+    const baseGoal = calorieStore.dailyGoal;
 
     loadedEntries.forEach((entry) => {
       const date = new Date(entry.timestamp).toLocaleDateString('en-US', {
@@ -563,10 +575,20 @@ async function loadChartData() {
   }
 }
 
-// Watchers
+// Watchers - update chart when period or entries change
 watch(() => props.selectedPeriod, () => {
   loadChartData();
 });
+
+// Watch for entries changes from store to update chart in real-time
+watch(() => entries.value, () => {
+  loadChartData();
+}, { deep: true });
+
+// Also watch store entries directly to ensure real-time updates
+watch(() => calorieStore.entries, () => {
+  loadChartData();
+}, { deep: true });
 
 // Lifecycle
 onMounted(() => {

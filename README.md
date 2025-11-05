@@ -66,8 +66,9 @@ Create a `.env` file in the root directory:
 cp .env.example .env
 ```
 
-Edit `.env` with your Firebase credentials:
+Edit `.env` with your Firebase and Gemini API credentials:
 ```
+# Firebase Configuration
 VITE_FIREBASE_API_KEY=your_api_key_here
 VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id
@@ -75,7 +76,18 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Gemini AI Pricing Service (for Shopping List ingredient pricing)
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
+
+#### Getting Your Gemini API Key
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Click **"Create API Key"**
+3. Copy the generated key and paste it in `.env`
+4. The Gemini API has a free tier - no credit card required
+
+**Note**: The app will work without a Gemini API key, but ingredient pricing on the Shopping List will use fallback hardcoded prices instead of AI-generated estimates.
 
 ## 🚀 Running the Application
 
@@ -237,17 +249,120 @@ Use environment variables for configuration:
 
 ## 🚀 Deployment
 
+### Pre-Deployment Checklist
+Before deploying, ensure you have:
+- ✅ All dependencies installed: `npm install`
+- ✅ Firebase project created and configured
+- ✅ Gemini API key obtained
+- ✅ All environment variables set in `.env`
+- ✅ Local testing completed: `npm run dev`
+
 ### Build for Production
 ```bash
 npm run build
 ```
 
-### Deploy to Static Hosting
-The `dist/` folder can be deployed to any static hosting service:
-- **Netlify**: Drag and drop the `dist/` folder
-- **Vercel**: Connect your repository
-- **GitHub Pages**: Use GitHub Actions
-- **AWS S3**: Upload the `dist/` folder
+This creates an optimized `dist/` folder ready for deployment.
+
+### Preview Production Build Locally
+```bash
+npm run preview
+```
+
+Test the production build on your local machine before deploying.
+
+### Environment Variables for Deployment
+
+When deploying to a hosting platform, you **MUST** set these environment variables:
+
+#### Firebase Variables (Required)
+```
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID
+VITE_FIREBASE_MEASUREMENT_ID
+```
+
+#### Gemini Variables (Required for AI Pricing)
+```
+VITE_GEMINI_API_KEY
+```
+
+### Deployment Options
+
+#### **Option 1: Netlify** (Recommended for Beginners)
+1. Connect your GitHub repository to [Netlify](https://netlify.com)
+2. In Netlify project settings, go to **Build & Deploy > Environment**
+3. Add all environment variables from your `.env` file
+4. Deploy settings:
+   - **Build command**: `npm run build`
+   - **Publish directory**: `dist`
+5. Click "Deploy"
+
+#### **Option 2: Vercel**
+1. Connect your GitHub repository to [Vercel](https://vercel.com)
+2. In project settings, go to **Environment Variables**
+3. Add all environment variables from your `.env` file
+4. Vercel auto-detects Vue.js and Vite configuration
+5. Click "Deploy"
+
+#### **Option 3: GitHub Pages**
+1. Build the app: `npm run build`
+2. Commit and push the `dist/` folder
+3. In GitHub repository settings:
+   - Go to **Pages**
+   - Set source to `dist` folder
+   - Click "Save"
+
+#### **Option 4: AWS S3 + CloudFront**
+1. Build the app: `npm run build`
+2. Create an S3 bucket for static website hosting
+3. Upload contents of `dist/` to S3
+4. Configure CloudFront for CDN distribution
+5. Note: Set up redirects for Vue Router single-page app
+
+#### **Option 5: Manual Hosting (VPS, Shared Hosting)**
+1. Build the app: `npm run build`
+2. Upload the `dist/` folder to your web server
+3. Configure your web server to serve `index.html` for all routes
+4. Example for Apache `.htaccess`:
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+```
+
+### Troubleshooting Deployment
+
+#### Issue: "Failed to resolve import @google/generative-ai"
+**Solution**: Run `npm install` before deploying. This error occurs when dependencies aren't installed.
+
+#### Issue: Gemini API key not working
+**Solution**:
+- Verify the key is set in environment variables on your hosting platform
+- Check the key is active in [Google AI Studio](https://aistudio.google.com/app/apikey)
+- The app will continue working with fallback prices if the key is missing
+
+#### Issue: Firebase authentication not working
+**Solution**:
+- Verify all Firebase environment variables are correct
+- Check Firebase project has Authentication and Firestore enabled
+- Verify authorized domains in Firebase Console includes your deployment domain
+
+#### Issue: Blank page after deployment
+**Solution**:
+- Check browser console for errors
+- Verify all environment variables are set on hosting platform
+- Ensure web server is configured to serve SPA (single-page application) properly
+- Check that the `dist/` folder was deployed correctly
 
 ## 🤝 Contributing
 
