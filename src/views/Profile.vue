@@ -559,8 +559,10 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useCalorieStore } from '@/stores/calorieStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useRouter } from 'vue-router'
 import { updateUserPreferences } from '@/utils/firestoreUtils'
 
@@ -568,6 +570,8 @@ export default {
   name: 'Profile',
   setup() {
     const authStore = useAuthStore()
+    const calorieStore = useCalorieStore()
+    const preferencesStore = usePreferencesStore()
     const router = useRouter()
 
     const activeTab = ref('personal')
@@ -597,6 +601,10 @@ export default {
       fitnessGoals: '',
       budget: 0
     })
+
+    // Computed properties to sync with stores
+    const dailyCalorieGoalFromStore = computed(() => calorieStore.dailyGoal)
+    const monthlyBudgetFromStore = computed(() => preferencesStore.monthlyBudget)
 
     const passwordForm = reactive({
       currentPassword: '',
@@ -631,6 +639,7 @@ export default {
     ])
 
     onMounted(async () => {
+      // Stores automatically set up listeners via watch on authStore.user
       const userProfile = await authStore.getUserProfile?.()
       if (userProfile) {
         profileData.name = userProfile.name || ''
@@ -641,12 +650,12 @@ export default {
           preferencesData.dietaryRestrictions = userProfile.preferences.dietaryRestrictions || []
           preferencesData.allergies = userProfile.preferences.allergies || []
           preferencesData.fitnessGoals = userProfile.preferences.fitnessGoals || ''
-          preferencesData.budget = userProfile.preferences.budget || 0
+          // Initialize budget from store (which will sync with Firebase)
+          preferencesData.budget = preferencesStore.monthlyBudget || userProfile.preferences.budget || 0
         }
 
-        if (userProfile.dailyCalorieGoal) {
-          editFormData.dailyCalorieGoal = userProfile.dailyCalorieGoal
-        }
+        // Initialize daily calorie goal from store (which will sync with Firebase)
+        editFormData.dailyCalorieGoal = calorieStore.dailyGoal || userProfile.dailyCalorieGoal || 2000
       }
 
       // If no photoURL from Firestore, check Firebase auth user (for Gmail users)
@@ -656,6 +665,22 @@ export default {
 
       editFormData.name = profileData.name || userName.value
       editFormData.email = userEmail.value
+    })
+
+    // Keep daily calorie goal in sync with store (bidirectional sync)
+    watch(() => calorieStore.dailyGoal, (newGoal) => {
+      if (newGoal && newGoal !== editFormData.dailyCalorieGoal) {
+        editFormData.dailyCalorieGoal = newGoal
+        console.log('✅ Daily calorie goal synced from store:', newGoal)
+      }
+    })
+
+    // Keep monthly budget in sync with store (bidirectional sync)
+    watch(() => preferencesStore.monthlyBudget, (newBudget) => {
+      if (newBudget !== undefined && newBudget !== preferencesData.budget) {
+        preferencesData.budget = newBudget
+        console.log('✅ Monthly budget synced from store:', newBudget)
+      }
     })
 
     const formatDate = (date) => {
@@ -696,14 +721,23 @@ export default {
 
     const saveCalorieGoal = async () => {
       try {
+        console.log('🔄 saveCalorieGoal called with value:', editFormData.dailyCalorieGoal)
+        console.log('📧 Current user email:', authStore.user?.email)
+        console.log('🏪 calorieStore object:', calorieStore)
+
         if (editFormData.dailyCalorieGoal < 1000 || editFormData.dailyCalorieGoal > 5000) {
           showError('Daily calorie goal must be between 1000 and 5000')
           return
         }
+
+        console.log('💾 Calling calorieStore.updateGoal()...')
+        // Update via store which syncs with Firebase and all connected components
+        await calorieStore.updateGoal(editFormData.dailyCalorieGoal)
+        console.log('✅ calorieStore.updateGoal() completed successfully')
         showSuccess('Daily calorie goal updated!')
       } catch (error) {
-        showError('Failed to update calorie goal')
-        console.error(error)
+        console.error('❌ Error in saveCalorieGoal:', error)
+        showError('Failed to update calorie goal: ' + error.message)
       }
     }
 
@@ -732,6 +766,10 @@ export default {
           return
         }
 
+        // Update budget via store (syncs with Firebase and all connected components)
+        await preferencesStore.updateBudget(preferencesData.budget)
+
+        // Update other preferences
         await updateUserPreferences(authStore.user.email, {
           dietaryRestrictions: preferencesData.dietaryRestrictions,
           allergies: preferencesData.allergies,

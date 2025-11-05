@@ -420,11 +420,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { showToast } from '@/utils/toast'
+
+const preferencesStore = usePreferencesStore()
 
 const isEditingBudget = ref(false)
 const monthlyBudgetInput = ref(null)
-const monthlyBudget = ref(0)
+const monthlyBudget = computed(() => preferencesStore.monthlyBudget)
 const isEditingExpense = ref(false)
 const editingExpenseIdx = ref(null)
 const showExpenseModal = ref(false)
@@ -539,15 +542,23 @@ const calendarDays = computed(() => {
   return days
 })
 
-const saveMonthlyBudget = () => {
+const saveMonthlyBudget = async () => {
   const amt = Number(monthlyBudgetInput.value)
   if (isNaN(amt) || amt < 0) {
-    alert('Enter a valid non-negative budget amount.')
+    showToast('Enter a valid non-negative budget amount.', 'error')
     return
   }
-  monthlyBudget.value = Number(amt.toFixed(2))
-  localStorage.setItem('monthlyBudget', String(monthlyBudget.value))
-  isEditingBudget.value = false
+
+  try {
+    const roundedAmount = Number(amt.toFixed(2))
+    // Update via store which syncs with Firebase and all connected components
+    await preferencesStore.updateBudget(roundedAmount)
+    isEditingBudget.value = false
+    showToast('Monthly budget updated successfully!', 'success')
+  } catch (error) {
+    showToast('Failed to update budget: ' + error.message, 'error')
+    console.error(error)
+  }
 }
 
 const cancelEditBudget = () => {
@@ -724,10 +735,11 @@ const cancelClearExpenses = () => {
 }
 
 onMounted(() => {
-  const mb = localStorage.getItem('monthlyBudget')
-  monthlyBudget.value = mb ? Number(mb) : 0
-  monthlyBudgetInput.value = monthlyBudget.value ? String(monthlyBudget.value) : null
+  // Store automatically sets up listener via watch on authStore.user
+  // Initialize monthlyBudgetInput from store
+  monthlyBudgetInput.value = preferencesStore.monthlyBudget ? String(preferencesStore.monthlyBudget) : null
 
+  // Load expenses from localStorage (not synced with Firebase, local only)
   const saved = localStorage.getItem('expenses')
   expenses.value = saved ? JSON.parse(saved) : []
 })

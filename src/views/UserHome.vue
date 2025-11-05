@@ -448,10 +448,12 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavouritesStore } from '@/stores/favourites'
+import { useMealPlanStore } from '@/stores/mealPlanStore'
 import VueApexCharts from 'vue3-apexcharts'
 import AddMealModal from '@/components/AddMealModal.vue'
 import EditMealModal from '@/components/EditMealModal.vue'
 import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs, onSnapshot as firestoreOnSnapshot, updateDoc, deleteDoc, doc } from 'firebase/firestore'
+import { updateCalorieEntry } from '@/utils/firestoreUtils'
 import { getAuth } from 'firebase/auth'
 import { onUnmounted } from 'vue'
 
@@ -464,6 +466,7 @@ export default {
   },
   setup() {
     const authStore = useAuthStore()
+    const mealPlanStore = useMealPlanStore()
     const db = getFirestore()
     const auth = getAuth()
 
@@ -485,36 +488,25 @@ export default {
     const unsubscribe = ref(null)
 
     // ========== FETCH WEEKLY MEALS - For scheduled meals section ==========
-    const weeklyMeals = ref([])
-    let mealsUnsubscribe = null
+    // Use store's upcomingMeals which are kept in sync via real-time listener
+    const weeklyMeals = computed(() => mealPlanStore.upcomingMeals)
 
-    async function loadWeeklyMeals() {
+    async function calculateMealsPercentageChange() {
+      // Calculate percentage change vs last week using store data
       if (!authStore.isAuthenticated) {
-        console.warn('⚠️ No user authenticated for weekly meals')
+        console.warn('⚠️ No user authenticated for meals percentage calculation')
         return
       }
 
       try {
-        const userEmail = authStore.userEmail // Using email from auth store
-        console.log('📧 Loading meals for user:', userEmail)
-        // Get current week dates
+        const userEmail = authStore.userEmail
+
+        // Get last week dates for percentage calculation
         const today = new Date()
         const dayOfWeek = today.getDay()
         const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
         const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToSubtract)
 
-        const dateStrings = []
-        for (let i = 0; i < 7; i++) {
-          const day = new Date(startOfWeek)
-          day.setDate(day.getDate() + i)
-          const year = day.getFullYear()
-          const month = (day.getMonth() + 1).toString().padStart(2, '0')
-          const dayStr = day.getDate().toString().padStart(2, '0')
-          dateStrings.push(`${year}-${month}-${dayStr}`)
-        }
-        console.log('📅 Week dates:', dateStrings)
-
-        // Get last week dates for percentage calculation
         const lastWeekStart = new Date(startOfWeek)
         lastWeekStart.setDate(lastWeekStart.getDate() - 7)
         const lastWeekDateStrings = []
@@ -526,73 +518,31 @@ export default {
           const dayStr = day.getDate().toString().padStart(2, '0')
           lastWeekDateStrings.push(`${year}-${month}-${dayStr}`)
         }
-        console.log('📅 Last week dates:', lastWeekDateStrings)
 
-        // Unsubscribe from previous listener if exists
-        if (mealsUnsubscribe) {
-          mealsUnsubscribe()
+        // Calculate percentage change
+        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
+        const lastWeekQuery = query(mealPlansCol, where('date', 'in', lastWeekDateStrings))
+        const lastWeekSnapshot = await getDocs(lastWeekQuery)
+        const lastWeekCount = lastWeekSnapshot.size
+        const thisWeekCount = mealPlanStore.upcomingMeals.length
+
+        if (lastWeekCount === 0) {
+          mealsPlannedPercentageChange.value = thisWeekCount > 0 ? 100 : 0
+        } else {
+          const percentageChange = Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100)
+          mealsPlannedPercentageChange.value = percentageChange
         }
 
-        // Set up real-time listener for weekly meals
-        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
-        console.log('🔍 Querying collection: users/', userEmail, '/mealPlans')
-        const mealQuery = query(mealPlansCol, where('date', 'in', dateStrings))
-
-        mealsUnsubscribe = onSnapshot(
-          mealQuery,
-          async (snapshot) => {
-            console.log('📸 Snapshot received, doc count:', snapshot.size)
-            const meals = []
-            snapshot.forEach((doc) => {
-              const data = doc.data()
-              console.log('📝 Meal:', data.name, 'Date:', data.date)
-              meals.push({
-                id: doc.id,
-                name: data.name || 'Untitled Meal',
-                type: data.type || 'Meal',
-                date: data.date,
-                calories: data.calories,
-                time: data.time,
-                imageUrl: data.imageUrl
-              })
-            })
-            // Sort by date
-            weeklyMeals.value = meals.sort((a, b) => {
-              const dateA = new Date(a.date)
-              const dateB = new Date(b.date)
-              return dateA - dateB
-            })
-            console.log('🍽️ Weekly meals loaded:', weeklyMeals.value.length, 'meals')
-            console.log('📊 Meals:', weeklyMeals.value)
-
-            // Calculate percentage change vs last week
-            try {
-              const lastWeekQuery = query(mealPlansCol, where('date', 'in', lastWeekDateStrings))
-              const lastWeekSnapshot = await getDocs(lastWeekQuery)
-              const lastWeekCount = lastWeekSnapshot.size
-              const thisWeekCount = snapshot.size
-
-              if (lastWeekCount === 0) {
-                // If no meals last week, calculate as 100% increase
-                mealsPlannedPercentageChange.value = thisWeekCount > 0 ? 100 : 0
-              } else {
-                const percentageChange = Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100)
-                mealsPlannedPercentageChange.value = percentageChange
-              }
-
-              console.log(`📊 Meals comparison: This week: ${thisWeekCount}, Last week: ${lastWeekCount}, Change: ${mealsPlannedPercentageChange.value}%`)
-            } catch (error) {
-              console.error('❌ Error calculating percentage change:', error)
-            }
-          },
-          (error) => {
-            console.error('❌ Error fetching meals:', error)
-          }
-        )
+        console.log(`📊 Meals comparison: This week: ${thisWeekCount}, Last week: ${lastWeekCount}, Change: ${mealsPlannedPercentageChange.value}%`)
       } catch (error) {
-        console.error('❌ Error loading weekly meals:', error)
+        console.error('❌ Error calculating meals percentage change:', error)
       }
     }
+
+    // Watch for changes in store meals to recalculate percentage
+    watch(() => mealPlanStore.upcomingMeals, () => {
+      calculateMealsPercentageChange()
+    }, { deep: true })
 
     // Initialize Firestore listener on mount
     onMounted(() => {
@@ -602,7 +552,8 @@ export default {
         fetchMealsPlanned()
         fetchRecipesSaved()
         fetchMoneySaved()
-        loadWeeklyMeals()
+        // Calculate meals percentage change - meals are loaded by mealPlanStore
+        calculateMealsPercentageChange()
       } else {
         console.warn('⚠️ No authenticated user - cannot fetch data')
       }
@@ -613,9 +564,7 @@ export default {
       if (unsubscribe.value) {
         unsubscribe.value()
       }
-      if (mealsUnsubscribe) {
-        mealsUnsubscribe()
-      }
+      // Note: mealPlanStore listener cleanup is handled by the store itself
     })
 
     // ========== ANIMATION HELPER ==========
@@ -1089,6 +1038,20 @@ export default {
           imageUrl: updatedMeal.imageUrl || null
         })
 
+        // Update linked calorie entry if it exists
+        if (updatedMeal.linkedCalorieEntryId) {
+          try {
+            await updateCalorieEntry(userEmail, updatedMeal.linkedCalorieEntryId, {
+              food: updatedMeal.name,
+              calories: updatedMeal.calories,
+              mealType: updatedMeal.type
+            })
+            console.log('✅ Linked calorie entry updated successfully')
+          } catch (calorieError) {
+            console.warn('⚠️ Could not update linked calorie entry:', calorieError.message)
+          }
+        }
+
         console.log('✅ Meal updated successfully')
         closeEditMealModal()
       } catch (error) {
@@ -1098,14 +1061,10 @@ export default {
 
     const handleDeleteMeal = async (mealId) => {
       try {
-        const userEmail = authStore.userEmail
-        const mealPlansCol = collection(db, 'users', userEmail, 'mealPlans')
-        const docRef = doc(mealPlansCol, mealId)
-
-        // Delete meal from Firestore
-        await deleteDoc(docRef)
-
-        console.log('✅ Meal deleted successfully')
+        // Delete meal with cascade using store (will also delete linked calorie entry)
+        await mealPlanStore.removeMeal(mealId)
+        // Real-time listener in store will automatically update weeklyMeals
+        console.log('✅ Meal deleted and real-time listener updated the UI')
         closeEditMealModal()
       } catch (error) {
         console.error('❌ Error deleting meal:', error)

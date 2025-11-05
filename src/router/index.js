@@ -12,6 +12,7 @@ import CalorieTracker from '../views/CalorieTracker.vue'
 import PlanMeal from '../views/PlanMeal.vue'
 import BudgetTracker from '../views/BudgetTracker.vue'
 import Favourites from '../views/Favourites.vue'
+import ShoppingList from '../views/ShoppingList.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

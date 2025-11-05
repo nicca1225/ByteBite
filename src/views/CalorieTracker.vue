@@ -282,31 +282,118 @@
           </div>
         </div>
       </div>
+
+      <!-- Edit Entry Modal - Works across all views -->
+      <div v-if="showEditModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-8 w-full max-w-md">
+          <h2 class="text-2xl font-light text-white mb-6">Edit Entry</h2>
+
+          <form @submit.prevent="submitEditEntry" class="space-y-5">
+            <div>
+              <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Food/Meal Description</label>
+              <input
+                v-model="editModalData.food"
+                type="text"
+                placeholder="e.g., Avocado Toast with Egg"
+                required
+                class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Calories (kcal)</label>
+                <input
+                  v-model.number="editModalData.calories"
+                  type="number"
+                  min="1"
+                  placeholder="350"
+                  required
+                  class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-gray-500 mb-2">Meal Type</label>
+                <select
+                  v-model="editModalData.mealType"
+                  required
+                  class="w-full p-3 bg-black border border-gray-800 rounded-lg text-white focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 appearance-none transition-colors"
+                >
+                  <option value="Breakfast">Breakfast</option>
+                  <option value="Lunch">Lunch</option>
+                  <option value="Dinner">Dinner</option>
+                  <option value="Snack">Snack</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <button
+                type="submit"
+                class="flex-1 bg-yellow-400 hover:bg-yellow-300 text-black font-medium py-3 rounded-lg transition-colors"
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                @click="closeEditModal"
+                class="flex-1 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white font-medium py-3 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div v-if="showDeleteConfirmation" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 rounded-xl p-8 w-full max-w-md">
+          <h2 class="text-2xl font-light text-white mb-4">Delete Entry?</h2>
+          <p class="text-gray-400 text-sm mb-6">Are you sure you want to delete this entry? This action cannot be undone.</p>
+
+          <div class="flex gap-3">
+            <button
+              @click="confirmDelete"
+              class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg transition-colors"
+            >
+              Delete
+            </button>
+            <button
+              @click="cancelDelete"
+              class="flex-1 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white font-medium py-3 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCalorieStore } from '@/stores/calorieStore';
+import { useMealPlanStore } from '@/stores/mealPlanStore';
 import CalorieTrackerOverview from '@/components/CalorieTrackerOverview.vue';
 import {
-  loadTodaysCalorieEntries,
   addCalorieEntry,
+  addMealPlan,
   updateCalorieEntry,
-  deleteCalorieEntry,
-  getDailyCalorieGoal,
-  updateDailyCalorieGoal,
+  updateMealPlan,
 } from '@/utils/firestoreUtils';
 
-// --- AUTH ---
+// --- AUTH & STORE ---
 const authStore = useAuthStore();
+const calorieStore = useCalorieStore();
+const mealPlanStore = useMealPlanStore();
 
 // --- LOCAL STATE ---
-const baseCalorieGoal = ref(2000); // Base daily goal
 const localError = ref(null);
 const editingEntry = ref(null);
-const isLoadingEntries = ref(true);
 const selectedPeriod = ref('day'); // 'day', 'week', or 'month'
 
 // --- GOAL EDIT STATE ---
@@ -314,8 +401,19 @@ const isEditingGoal = ref(false);
 const newGoalInput = ref(2000);
 const isSavingGoal = ref(false);
 
-// Initial data for display
-const dailyEntries = ref([]);
+// --- EDIT MODAL STATE ---
+const showEditModal = ref(false);
+const editModalData = ref({
+  id: null,
+  food: '',
+  calories: null,
+  mealType: 'Breakfast',
+  linkedMealId: null,
+});
+
+// --- DELETE CONFIRMATION STATE ---
+const showDeleteConfirmation = ref(false);
+const deleteEntryId = ref(null);
 
 // Form state
 const newEntry = ref({
@@ -326,19 +424,37 @@ const newEntry = ref({
 
 // --- COMPUTED PROPERTIES ---
 
+const dailyEntries = computed(() => {
+  if (selectedPeriod.value === 'day') {
+    return calorieStore.todaysEntries;
+  } else if (selectedPeriod.value === 'week') {
+    return calorieStore.thisWeekEntries;
+  } else {
+    return calorieStore.thisMonthEntries;
+  }
+});
+
+const isLoadingEntries = computed(() => calorieStore.isLoadingEntries);
+
 const calorieGoal = computed(() => {
   if (selectedPeriod.value === 'day') {
-    return baseCalorieGoal.value;
+    return calorieStore.dailyGoal;
   } else if (selectedPeriod.value === 'week') {
-    return baseCalorieGoal.value * 7;
+    return calorieStore.dailyGoal * 7;
   } else {
     // Month - assume 30 days
-    return baseCalorieGoal.value * 30;
+    return calorieStore.dailyGoal * 30;
   }
 });
 
 const todaysCalorieTotal = computed(() => {
-  return dailyEntries.value.reduce((total, entry) => total + entry.calories, 0);
+  if (selectedPeriod.value === 'day') {
+    return calorieStore.todaysCalorieTotal;
+  } else if (selectedPeriod.value === 'week') {
+    return calorieStore.weekCalorieTotal;
+  } else {
+    return calorieStore.monthCalorieTotal;
+  }
 });
 
 const caloriesRemaining = computed(() => {
@@ -378,51 +494,10 @@ const periodDate = computed(() => {
 
 // --- ACTIONS ---
 
-async function loadTodaysEntries() {
-  console.log('🔄 Loading entries...');
-
-  if (!authStore.user) {
-    console.error('❌ No user logged in');
-    localError.value = "Please log in to track calories.";
-    isLoadingEntries.value = false;
-    return;
-  }
-
-  try {
-    isLoadingEntries.value = true;
-    const entries = await loadTodaysCalorieEntries(authStore.user.email);
-    dailyEntries.value = entries;
-    console.log('✅ Today\'s entries loaded:', dailyEntries.value.length);
-  } catch (error) {
-    console.error('❌ Error loading entries:', error);
-    localError.value = "Failed to load entries. Please try again.";
-  } finally {
-    isLoadingEntries.value = false;
-  }
-}
-
-async function loadEntriesByPeriod() {
-  console.log(`🔄 Loading entries for period: ${selectedPeriod.value}`);
-
-  if (!authStore.user) {
-    console.error('❌ No user logged in');
-    localError.value = "Please log in to track calories.";
-    isLoadingEntries.value = false;
-    return;
-  }
-
-  try {
-    isLoadingEntries.value = true;
-    const { loadCalorieEntriesByPeriod } = await import('@/utils/firestoreUtils');
-    const entries = await loadCalorieEntriesByPeriod(authStore.user.email, selectedPeriod.value);
-    dailyEntries.value = entries;
-    console.log(`✅ Entries loaded for ${selectedPeriod.value}:`, dailyEntries.value.length);
-  } catch (error) {
-    console.error('❌ Error loading entries:', error);
-    localError.value = "Failed to load entries. Please try again.";
-  } finally {
-    isLoadingEntries.value = false;
-  }
+// Period change handler (store will auto-filter data)
+function loadEntriesByPeriod() {
+  console.log(`📊 Switched to ${selectedPeriod.value} view`);
+  // Store's real-time listener handles all data - no manual loading needed
 }
 
 async function handleSubmit() { // Handles both logging and updating
@@ -448,39 +523,40 @@ async function handleSubmit() { // Handles both logging and updating
   };
 
   try {
-    if (editingEntry.value) {
-      // UPDATE LOGIC
-      console.log('✏️ Updating entry:', editingEntry.value.id);
-      await updateCalorieEntry(authStore.user.email, editingEntry.value.id, entryData);
-      console.log('✅ Entry updated successfully');
+    // NEW ENTRY LOGIC ONLY (day view)
+    // Modal-based editing is handled separately
+    console.log('➕ Creating new entry with linked meal plan...');
 
-      // Update local array
-      const index = dailyEntries.value.findIndex(e => e.id === editingEntry.value.id);
-      if (index !== -1) {
-        dailyEntries.value[index] = {
-          ...dailyEntries.value[index],
-          ...entryData,
-        };
-      }
-      editingEntry.value = null;
+    // Create calorie entry first
+    const calorieEntryId = await calorieStore.addEntry(entryData);
+    console.log('✅ Calorie entry added with ID:', calorieEntryId);
 
-    } else {
-      // NEW ENTRY LOGIC
-      console.log('➕ Creating new entry...');
-      const docId = await addCalorieEntry(authStore.user.email, entryData);
-      console.log('✅ Entry saved with ID:', docId);
+    // Create corresponding meal plan for today with linking
+    const today = new Date();
+    const dateString = today.toISOString().split('T')[0];
 
-      // Add the new entry to the front of the list (newest first)
-      dailyEntries.value.unshift({
-        id: docId,
-        ...entryData,
-        timestamp: Date.now(),
+    try {
+      const mealPlanId = await addMealPlan(authStore.user.email, {
+        date: dateString,
+        type: newEntry.value.mealType,
+        name: newEntry.value.food,
+        calories: parseInt(newEntry.value.calories),
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        imageUrl: null,
+        linkedCalorieEntryId: calorieEntryId // Link the calorie entry to this meal
       });
+      console.log('✅ Meal plan added with ID:', mealPlanId);
 
-      console.log('✅ Entry added to local list');
+      // Update calorie entry with linked meal ID
+      await updateCalorieEntry(authStore.user.email, calorieEntryId, {
+        linkedMealId: mealPlanId
+      });
+      console.log('✅ Calorie entry updated with linked meal ID');
+    } catch (mealError) {
+      console.warn('⚠️ Could not create linked meal plan, but calorie entry was created:', mealError.message);
     }
 
-    // Reset form
+    // Reset form - store listener will auto-update UI
     newEntry.value.food = '';
     newEntry.value.calories = null;
     newEntry.value.mealType = 'Breakfast';
@@ -494,44 +570,115 @@ async function handleSubmit() { // Handles both logging and updating
 }
 
 function editEntry(entry) {
-    // Enter edit mode
-    editingEntry.value = entry;
-    
-    // Populate form with existing data
-    newEntry.value.food = entry.food;
-    newEntry.value.calories = entry.calories;
-    newEntry.value.mealType = entry.mealType;
+    // Open modal for all views (day, week, month)
+    openEditModal(entry);
+}
 
-    // Optional: Scroll to the form for better UX
-    document.querySelector('.log-meal-form')?.scrollIntoView({ behavior: 'smooth' });
+function openEditModal(entry) {
+    editModalData.value = {
+        id: entry.id,
+        food: entry.food || '',
+        calories: entry.calories || null,
+        mealType: entry.mealType || 'Breakfast',
+        linkedMealId: entry.linkedMealId || null,
+    };
+    showEditModal.value = true;
+}
+
+function closeEditModal() {
+    showEditModal.value = false;
+    editModalData.value = {
+        id: null,
+        food: '',
+        calories: null,
+        mealType: 'Breakfast',
+        linkedMealId: null,
+    };
+}
+
+async function submitEditEntry() {
+    console.log('💾 Submitting edit entry');
+    localError.value = null;
+
+    if (!editModalData.value.id) {
+        console.error('❌ No entry ID found');
+        localError.value = "Entry not found.";
+        return;
+    }
+
+    if (!editModalData.value.food || !editModalData.value.calories || !editModalData.value.mealType) {
+        console.error('❌ Missing fields');
+        localError.value = "Please fill out all fields.";
+        return;
+    }
+
+    const entryData = {
+        food: editModalData.value.food,
+        calories: parseInt(editModalData.value.calories),
+        mealType: editModalData.value.mealType,
+    };
+
+    try {
+        console.log('✏️ Updating entry:', editModalData.value.id);
+        await calorieStore.editEntry(editModalData.value.id, entryData);
+        console.log('✅ Entry updated successfully');
+
+        // Update linked meal plan if it exists
+        if (editModalData.value.linkedMealId) {
+          try {
+            await updateMealPlan(authStore.user.email, editModalData.value.linkedMealId, {
+              name: editModalData.value.food,
+              calories: parseInt(editModalData.value.calories),
+              type: editModalData.value.mealType
+            });
+            console.log('✅ Linked meal plan updated successfully');
+          } catch (mealError) {
+            console.warn('⚠️ Could not update linked meal plan:', mealError.message);
+          }
+        }
+
+        // Store listener will auto-update UI across all views
+        closeEditModal();
+    } catch (error) {
+        console.error('❌ Error updating entry:', error);
+        localError.value = "Failed to update entry. Please try again.";
+    }
 }
 
 function cancelEdit() {
     editingEntry.value = null;
     newEntry.value.food = '';
     newEntry.value.calories = null;
-    newEntry.value.mealType = 'Breakfast'; 
+    newEntry.value.mealType = 'Breakfast';
     localError.value = null;
 }
 
-async function deleteEntry(id) {
-    console.log('🗑️ Deleting entry:', id);
+function deleteEntry(entry) {
+    // Show confirmation modal instead of deleting immediately
+    // Handle both ID string (from day view) and entry object (from week/month cards)
+    deleteEntryId.value = typeof entry === 'string' ? entry : entry.id;
+    showDeleteConfirmation.value = true;
+}
 
-    if (!authStore.user) {
-      console.error('❌ No user logged in');
-      localError.value = "Please log in to delete entries.";
+function cancelDelete() {
+    showDeleteConfirmation.value = false;
+    deleteEntryId.value = null;
+}
+
+async function confirmDelete() {
+    console.log('🗑️ Confirming deletion for entry:', deleteEntryId.value);
+
+    if (!deleteEntryId.value) {
+      console.error('❌ No entry ID found');
       return;
     }
 
     try {
-      // Delete from Firebase
-      await deleteCalorieEntry(authStore.user.email, id);
-      console.log('✅ Entry deleted from Firestore');
-
-      // Remove from local array
-      dailyEntries.value = dailyEntries.value.filter(entry => entry.id !== id);
-      console.log('✅ Entry removed from local list');
-
+      // Delete via store
+      await calorieStore.removeEntry(deleteEntryId.value);
+      console.log('✅ Entry deleted successfully');
+      // Store listener will auto-update UI across all views
+      cancelDelete();
     } catch (error) {
       console.error('❌ Error deleting entry:', error);
       localError.value = "Failed to delete entry. Please try again.";
@@ -551,13 +698,14 @@ function formatTimestamp(timestamp) {
 }
 
 function refreshEntries() {
-  // Manually refresh the entries from Firebase
-  loadTodaysEntries();
+  // Manual refresh - store listener is real-time, but this can force a refresh
+  console.log('🔄 Manual refresh requested');
+  // Store's listener is active and real-time, no need to manually reload
 }
 
 // --- GOAL EDITING FUNCTIONS ---
 function openGoalEditor() {
-  newGoalInput.value = baseCalorieGoal.value;
+  newGoalInput.value = calorieStore.dailyGoal;
   isEditingGoal.value = true;
 }
 
@@ -567,12 +715,6 @@ function closeGoalEditor() {
 }
 
 async function saveNewGoal() {
-  if (!authStore.user) {
-    console.error('❌ No user logged in');
-    localError.value = "Please log in to update your calorie goal.";
-    return;
-  }
-
   if (!newGoalInput.value || newGoalInput.value < 1) {
     localError.value = "Daily calorie goal must be greater than 0.";
     return;
@@ -583,10 +725,8 @@ async function saveNewGoal() {
     localError.value = null;
 
     console.log('💾 Saving new daily calorie goal:', newGoalInput.value);
-    await updateDailyCalorieGoal(authStore.user.email, newGoalInput.value);
-
-    // Update local state
-    baseCalorieGoal.value = parseInt(newGoalInput.value);
+    await calorieStore.updateGoal(parseInt(newGoalInput.value));
+    // Store listener will auto-update UI
 
     console.log('✅ Daily calorie goal updated successfully');
     closeGoalEditor();
@@ -598,26 +738,14 @@ async function saveNewGoal() {
   }
 }
 
-async function loadUserDailyGoal() {
-  if (!authStore.user) {
-    console.error('❌ No user logged in');
-    return;
-  }
-
-  try {
-    console.log('🔄 Loading user daily calorie goal...');
-    const goal = await getDailyCalorieGoal(authStore.user.email);
-    baseCalorieGoal.value = goal;
-    console.log('✅ Daily goal loaded:', goal);
-  } catch (error) {
-    console.error('❌ Error loading daily goal:', error);
-    baseCalorieGoal.value = 2000; // Fall back to default
-  }
-}
-
 // --- LIFECYCLE ---
 onMounted(() => {
-  loadUserDailyGoal();
-  loadTodaysEntries();
+  // Store automatically sets up listeners via watch on authStore.user
+  console.log('📊 CalorieTracker mounted');
+});
+
+onUnmounted(() => {
+  // Cleanup is handled by store's cleanup method
+  console.log('📊 CalorieTracker unmounted');
 });
 </script>

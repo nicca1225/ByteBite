@@ -78,6 +78,28 @@
           </div>
         </div>
 
+        <!-- Meal Type Legend -->
+        <div class="px-6 py-4 border-b border-gray-800/50 bg-black/30">
+          <div class="flex flex-wrap gap-4">
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-full bg-blue-500/30 border border-blue-500/50"></div>
+              <span class="text-xs text-gray-400">Breakfast</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-full bg-green-500/30 border border-green-500/50"></div>
+              <span class="text-xs text-gray-400">Lunch</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-full bg-purple-500/30 border border-purple-500/50"></div>
+              <span class="text-xs text-gray-400">Dinner</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-full bg-yellow-500/30 border border-yellow-500/50"></div>
+              <span class="text-xs text-gray-400">Snack</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Calendar Grid -->
         <div class="px-6 pb-6">
           <div class="border border-gray-800/50 rounded-lg overflow-hidden">
@@ -178,12 +200,6 @@
                 :key="meal.id"
                 class="bg-black border border-gray-800/50 rounded-lg overflow-hidden hover:border-yellow-400/30 transition-colors group"
               >
-                <!-- Meal Image or Emoji -->
-                <div v-if="meal.imageUrl" class="relative h-32 overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
-                  <img :src="meal.imageUrl" :alt="meal.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-                </div>
-
                 <!-- Meal Details -->
                 <div class="p-4">
                   <div class="flex items-center justify-between mb-2">
@@ -455,18 +471,20 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useMealPlanStore } from '@/stores/mealPlanStore'
+import { useCalorieStore } from '@/stores/calorieStore'
 import {
-  loadUserMealPlans,
   addMealPlan,
   updateMealPlan,
-  deleteMealPlan,
   addCalorieEntry,
-  deleteCalorieEntry,
+  updateCalorieEntry,
 } from '@/utils/firestoreUtils'
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
-// Auth store
+// Stores
 const authStore = useAuthStore()
+const mealPlanStore = useMealPlanStore()
+const calorieStore = useCalorieStore()
 
 // Recipe data from RecipeDetail (if user clicked "Add to Meal Planner")
 const recipeFromSession = ref(null)
@@ -475,10 +493,10 @@ const recipeFromSession = ref(null)
 const currentMonth = ref(new Date().getMonth())
 const currentYear = ref(new Date().getFullYear())
 
-// Meals data
-const meals = ref([])
-const isLoading = ref(false)
-const error = ref(null)
+// Local state
+const isLoading = computed(() => mealPlanStore.isLoadingMeals)
+const error = computed(() => mealPlanStore.error)
+const meals = computed(() => mealPlanStore.meals)
 
 // Dialog state
 const showDayDetail = ref(false)
@@ -491,7 +509,8 @@ const newMeal = ref({
   type: 'Breakfast',
   name: '',
   calories: null,
-  time: ''
+  time: '',
+  imageUrl: null
 })
 
 // Edit meal state
@@ -500,7 +519,8 @@ const editMealForm = ref({
   type: 'Breakfast',
   name: '',
   calories: null,
-  time: ''
+  time: '',
+  linkedCalorieEntryId: null
 })
 const editMealPreview = ref(null)
 const editMealFile = ref(null)
@@ -594,27 +614,7 @@ function getMealsForDay(date) {
 }
 
 // Load meals from Firebase
-async function loadMealsFromFirebase() {
-  if (!authStore.user) {
-    console.log('⏭️ No user logged in, skipping meal load')
-    return
-  }
-
-  try {
-    isLoading.value = true
-    error.value = null
-    console.log('📦 Loading meals from Firebase...')
-
-    const loadedMeals = await loadUserMealPlans(authStore.user.email)
-    meals.value = loadedMeals
-    console.log('✅ Meals loaded:', loadedMeals.length)
-  } catch (err) {
-    console.error('❌ Error loading meals:', err)
-    error.value = 'Failed to load meal plans. Please refresh the page.'
-  } finally {
-    isLoading.value = false
-  }
-}
+// Meals are now loaded automatically by mealPlanStore real-time listener
 
 // Navigation
 function previousMonth() {
@@ -651,6 +651,8 @@ function openDayDetail(day) {
     console.log('🎯 Day selected for recipe, opening add meal dialog with pre-filled data')
     newMeal.value.name = recipeFromSession.value.name
     newMeal.value.calories = recipeFromSession.value.calories
+    // Store image URL internally for Firebase but don't show in dialog
+    newMeal.value.imageUrl = recipeFromSession.value.imageUrl
     newMeal.value.type = 'Breakfast' // Default meal type
     newMeal.value.time = ''
 
@@ -677,7 +679,8 @@ function closeAddMealDialog() {
     type: 'Breakfast',
     name: '',
     calories: null,
-    time: ''
+    time: '',
+    imageUrl: null
   }
 
   // Reset recipe selection if closing without adding
@@ -698,60 +701,59 @@ async function addMeal() {
     error.value = null
     console.log('📝 Adding meal:', newMeal.value)
 
-    // Add to Firebase
+    // First, handle calorie syncing - create calorie entry for ALL meal dates
+    let linkedCalorieEntryId = null
+    const [year, month, day] = selectedDay.value.date.split('-')
+    const mealDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    mealDate.setHours(0, 0, 0, 0)
+
+    try {
+      console.log('📊 Adding calorie entry for meal:', newMeal.value.name, 'Calories:', newMeal.value.calories)
+      const calorieValue = newMeal.value.calories ? parseInt(newMeal.value.calories) : 0
+
+      // Add calorie entry with linkedMealId (will be set after meal is created)
+      // Create entry with timestamp matching the meal date
+      linkedCalorieEntryId = await addCalorieEntry(authStore.user.email, {
+        food: newMeal.value.name,
+        calories: calorieValue,
+        mealType: newMeal.value.type || 'Meal',
+        linkedMealId: null, // Will update this after meal is created
+        timestamp: mealDate.getTime() // Use meal date as timestamp
+      })
+      console.log('✅ Calorie entry added with ID:', linkedCalorieEntryId, 'for date:', selectedDay.value.date)
+    } catch (calorieErr) {
+      console.error('❌ Error adding calorie entry:', calorieErr)
+      console.warn('⚠️ Could not add calorie entry, continuing with meal creation:', calorieErr)
+      // Don't fail the meal addition if calorie entry fails
+    }
+
+    // Add meal to Firebase with linkedCalorieEntryId
     const mealId = await addMealPlan(authStore.user.email, {
       date: selectedDay.value.date,
       type: newMeal.value.type,
       name: newMeal.value.name,
       calories: newMeal.value.calories,
       time: newMeal.value.time,
+      imageUrl: newMeal.value.imageUrl || null,
+      linkedCalorieEntryId: linkedCalorieEntryId // Link them together
     })
 
-    // Add to local array
-    const meal = {
-      id: mealId,
-      date: selectedDay.value.date,
-      type: newMeal.value.type,
-      name: newMeal.value.name,
-      calories: newMeal.value.calories,
-      time: newMeal.value.time,
-    }
+    console.log('✅ Meal added with ID:', mealId)
 
-    meals.value.push(meal)
-    console.log('✅ Meal added successfully')
-
-    // Also add to CalorieTracker automatically
-    // Only add to calorie tracker if the meal is for today or earlier
-    // Parse date string properly to avoid timezone issues
-    const [year, month, day] = selectedDay.value.date.split('-')
-    const mealDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
-    mealDate.setHours(0, 0, 0, 0)
-
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    console.log('🔍 Debug - Meal date:', selectedDay.value.date, 'Parsed:', mealDate, 'Today:', today, 'Should add calories:', mealDate.getTime() <= today.getTime())
-
-    if (mealDate.getTime() <= today.getTime()) {
+    // Update calorie entry with linked meal ID to complete bidirectional link
+    if (linkedCalorieEntryId) {
       try {
-        console.log('📊 Adding calorie entry for meal:', newMeal.value.name, 'Calories:', newMeal.value.calories)
-        const calorieValue = newMeal.value.calories ? parseInt(newMeal.value.calories) : 0
-        console.log('📊 Calorie value to add:', calorieValue)
-
-        await addCalorieEntry(authStore.user.email, {
-          food: newMeal.value.name,
-          calories: calorieValue,
-          mealType: newMeal.value.type || 'Meal'
+        await updateCalorieEntry(authStore.user.email, linkedCalorieEntryId, {
+          linkedMealId: mealId
         })
-        console.log('✅ Calorie entry added automatically')
-      } catch (calorieErr) {
-        console.error('❌ Error adding calorie entry:', calorieErr)
-        console.warn('⚠️ Could not add calorie entry:', calorieErr)
-        // Don't fail the meal addition if calorie entry fails
+        console.log('✅ Calorie entry updated with linked meal ID')
+      } catch (updateErr) {
+        console.warn('⚠️ Could not update calorie entry with meal link:', updateErr.message)
       }
-    } else {
-      console.log('ℹ️ Meal is for future date, skipping calorie tracker auto-sync')
     }
+
+    // Meal will be added automatically by mealPlanStore's real-time listener
+    console.log('✅ Meal added successfully and linked to calorie entry')
 
     // Reset recipe selection after successful addition
     if (isSelectingDayForRecipe.value) {
@@ -768,34 +770,12 @@ async function addMeal() {
 }
 
 async function removeMeal(mealId) {
-  if (!authStore.user) {
-    error.value = 'Please log in to remove meal plans'
-    return
-  }
-
   try {
-    error.value = null
-    console.log('🗑️ Removing meal:', mealId)
-
-    // Find the meal to get its details before deleting
-    const mealToDelete = meals.value.find(m => m.id === mealId)
-
-    // Delete from Firebase
-    await deleteMealPlan(authStore.user.email, mealId)
-
-    // Remove from local array
-    meals.value = meals.value.filter(meal => meal.id !== mealId)
-    console.log('✅ Meal removed successfully')
-
-    // Note: We cannot automatically remove from CalorieTracker without storing a reference
-    // Users should manually remove entries from CalorieTracker if they change their mind
-    // This prevents accidental deletion of manually logged entries with the same name
-    if (mealToDelete) {
-      console.log('ℹ️ Meal deleted. Note: You may want to check CalorieTracker if this meal was for today.')
-    }
+    await mealPlanStore.removeMeal(mealId)
+    // Real-time listener will automatically update meals
+    console.log('✅ Meal deleted and real-time listener will update the UI')
   } catch (err) {
     console.error('❌ Error removing meal:', err)
-    error.value = 'Failed to remove meal. Please try again.'
   }
 }
 
@@ -806,7 +786,8 @@ function openEditMealDialog(meal, date) {
     type: meal.type || 'Breakfast',
     name: meal.name || '',
     calories: meal.calories || null,
-    time: meal.time || ''
+    time: meal.time || '',
+    linkedCalorieEntryId: meal.linkedCalorieEntryId || null
   }
   editMealPreview.value = meal.imageUrl || null
   editMealFile.value = null
@@ -821,7 +802,8 @@ function closeEditMealDialog() {
     type: 'Breakfast',
     name: '',
     calories: null,
-    time: ''
+    time: '',
+    linkedCalorieEntryId: null
   }
   editMealPreview.value = null
   editMealFile.value = null
@@ -898,6 +880,20 @@ async function submitEditMeal() {
       imageUrl: imageUrl || null
     })
 
+    // Update linked calorie entry if it exists
+    if (editMealForm.value.linkedCalorieEntryId) {
+      try {
+        await updateCalorieEntry(authStore.user.email, editMealForm.value.linkedCalorieEntryId, {
+          food: editMealForm.value.name,
+          calories: editMealForm.value.calories,
+          mealType: editMealForm.value.type
+        })
+        console.log('✅ Linked calorie entry updated successfully')
+      } catch (calorieError) {
+        console.warn('⚠️ Could not update linked calorie entry:', calorieError.message)
+      }
+    }
+
     // Update local array
     const mealIndex = meals.value.findIndex(m => m.id === editMealForm.value.id)
     if (mealIndex !== -1) {
@@ -957,6 +953,7 @@ onMounted(() => {
     }
   }
 
-  loadMealsFromFirebase()
+  // Meals are automatically loaded by mealPlanStore real-time listener
+  console.log('📦 Meal planner mounted - meals will load automatically from store')
 })
 </script>

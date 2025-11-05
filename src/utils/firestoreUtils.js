@@ -96,7 +96,7 @@ export async function getMealsForDate(userEmail, date) {
 /**
  * Add a new meal plan
  * @param {string} userEmail - User email address
- * @param {Object} mealData - { date, type, name, calories?, time? }
+ * @param {Object} mealData - { date, type, name, calories?, time?, linkedCalorieEntryId? }
  * @returns {Promise<string>} Document ID of the new meal
  */
 export async function addMealPlan(userEmail, mealData) {
@@ -119,6 +119,8 @@ export async function addMealPlan(userEmail, mealData) {
       name: mealData.name,
       calories: mealData.calories || null,
       time: mealData.time || null,
+      imageUrl: mealData.imageUrl || null,
+      linkedCalorieEntryId: mealData.linkedCalorieEntryId || null, // Link to calorie entry if synced
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -307,7 +309,7 @@ export async function loadCalorieEntriesByPeriod(userEmail, period) {
 /**
  * Add a new calorie entry
  * @param {string} userEmail - User email address
- * @param {Object} entryData - { food, calories, mealType }
+ * @param {Object} entryData - { food, calories, mealType, linkedMealId? }
  * @returns {Promise<string>} Document ID of the new entry
  */
 export async function addCalorieEntry(userEmail, entryData) {
@@ -324,11 +326,19 @@ export async function addCalorieEntry(userEmail, entryData) {
 
     console.log('➕ Adding calorie entry:', entryData);
 
+    // Use custom timestamp if provided (for future/past meal planning), otherwise use server timestamp
+    let timestamp = serverTimestamp();
+    if (entryData.timestamp) {
+      timestamp = entryData.timestamp;
+      console.log('📅 Using custom timestamp for entry:', new Date(entryData.timestamp).toISOString());
+    }
+
     const calorieData = {
       food: entryData.food,
       calories: parseInt(entryData.calories),
       mealType: entryData.mealType,
-      timestamp: serverTimestamp(),
+      linkedMealId: entryData.linkedMealId || null, // Link to meal plan if synced
+      timestamp: timestamp,
       createdAt: serverTimestamp(),
     };
 
@@ -395,6 +405,103 @@ export async function deleteCalorieEntry(userEmail, entryId) {
     console.log('✅ Calorie entry deleted');
   } catch (error) {
     console.error('❌ Error deleting calorie entry:', error);
+    throw new Error(`Failed to delete calorie entry: ${error.message}`);
+  }
+}
+
+/**
+ * CASCADE DELETE: Delete a meal plan AND its linked calorie entry (if it exists)
+ * @param {string} userEmail - User email address
+ * @param {string} mealId - Meal plan document ID
+ * @returns {Promise<void>}
+ */
+export async function deleteMealPlanWithCascade(userEmail, mealId) {
+  try {
+    if (!userEmail || !mealId) {
+      console.error('❌ Missing userEmail or mealId');
+      throw new Error('User email and Meal ID are required');
+    }
+
+    console.log('🗑️ Cascade deleting meal plan:', mealId);
+
+    // 1. Fetch the meal to get linkedCalorieEntryId
+    const mealRef = doc(db, `users/${userEmail}/mealPlans/${mealId}`);
+    const mealSnapshot = await getDoc(mealRef);
+
+    if (!mealSnapshot.exists()) {
+      throw new Error('Meal not found');
+    }
+
+    const mealData = mealSnapshot.data();
+    const linkedCalorieEntryId = mealData.linkedCalorieEntryId;
+
+    // 2. Delete the meal plan
+    await deleteDoc(mealRef);
+    console.log('✅ Meal plan deleted:', mealId);
+
+    // 3. If there's a linked calorie entry, delete it too
+    if (linkedCalorieEntryId) {
+      try {
+        const calorieRef = doc(db, `users/${userEmail}/calorieEntries/${linkedCalorieEntryId}`);
+        await deleteDoc(calorieRef);
+        console.log('✅ Linked calorie entry deleted:', linkedCalorieEntryId);
+      } catch (err) {
+        console.warn('⚠️ Could not delete linked calorie entry (may have been deleted separately):', err.message);
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error cascade deleting meal plan:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    throw new Error(`Failed to delete meal plan: ${error.message || 'Unknown error'}`);
+  }
+}
+
+/**
+ * CASCADE DELETE: Delete a calorie entry AND its linked meal plan (if it exists)
+ * @param {string} userEmail - User email address
+ * @param {string} entryId - Calorie entry document ID
+ * @returns {Promise<void>}
+ */
+export async function deleteCalorieEntryWithCascade(userEmail, entryId) {
+  try {
+    if (!userEmail || !entryId) {
+      console.error('❌ Missing userEmail or entryId');
+      throw new Error('User email and Entry ID are required');
+    }
+
+    console.log('🗑️ Cascade deleting calorie entry:', entryId);
+
+    // 1. Fetch the entry to get linkedMealId
+    const entryRef = doc(db, `users/${userEmail}/calorieEntries/${entryId}`);
+    const entrySnapshot = await getDoc(entryRef);
+
+    if (!entrySnapshot.exists()) {
+      throw new Error('Calorie entry not found');
+    }
+
+    const entryData = entrySnapshot.data();
+    const linkedMealId = entryData.linkedMealId;
+
+    // 2. Delete the calorie entry
+    await deleteDoc(entryRef);
+    console.log('✅ Calorie entry deleted:', entryId);
+
+    // 3. If there's a linked meal, delete it too
+    if (linkedMealId) {
+      try {
+        const mealRef = doc(db, `users/${userEmail}/mealPlans/${linkedMealId}`);
+        await deleteDoc(mealRef);
+        console.log('✅ Linked meal plan deleted:', linkedMealId);
+      } catch (err) {
+        console.warn('⚠️ Could not delete linked meal plan (may have been deleted separately):', err.message);
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error cascade deleting calorie entry:', error);
     throw new Error(`Failed to delete calorie entry: ${error.message}`);
   }
 }
@@ -689,5 +796,40 @@ export async function updateUserPreferences(userEmail, preferencesData) {
   } catch (error) {
     console.error('❌ Error updating user preferences:', error);
     throw new Error(`Failed to update preferences: ${error.message}`);
+  }
+}
+
+/**
+ * Update monthly budget
+ * @param {string} userEmail - User email address
+ * @param {number} budget - Monthly budget amount
+ * @returns {Promise<void>}
+ */
+export async function updateMonthlyBudget(userEmail, budget) {
+  try {
+    if (!userEmail) {
+      console.error('❌ No userEmail provided');
+      throw new Error('User email is required');
+    }
+
+    if (budget === null || budget === undefined || budget < 0) {
+      console.error('❌ Invalid budget amount');
+      throw new Error('Monthly budget must be a non-negative number');
+    }
+
+    console.log('💰 Updating monthly budget to:', budget);
+
+    const userRef = doc(db, 'users', userEmail);
+
+    // Use setDoc with merge: true to update only the budget
+    await setDoc(userRef, {
+      monthlyBudget: Number(budget),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    console.log('✅ Monthly budget updated to:', budget);
+  } catch (error) {
+    console.error('❌ Error updating monthly budget:', error);
+    throw new Error(`Failed to update monthly budget: ${error.message}`);
   }
 }
