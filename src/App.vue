@@ -14,7 +14,7 @@
           </router-link>
 
           <!-- Centered Navigation Links - Desktop -->
-          <div class="hidden lg:flex items-center justify-center flex-1 mx-8">
+          <div v-if="isAuthenticated" class="hidden lg:flex items-center justify-center flex-1 mx-8">
             <div class="flex items-center space-x-1 bg-gray-900/50 rounded-full px-6 py-3 backdrop-blur-md border border-yellow-400/20 hover:border-yellow-400/40 transition-all duration-300">
               <!-- Find Recipes (Auth Only) -->
               <router-link
