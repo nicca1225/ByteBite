@@ -69,7 +69,7 @@ Create a `.env` file in the root directory:
 cp .env.example .env
 ```
 
-Edit `.env` with your Firebase and Gemini API credentials:
+Edit `.env` with your Firebase, Gemini, and Spoonacular API credentials:
 ```
 # Firebase Configuration
 VITE_FIREBASE_API_KEY=your_api_key_here
@@ -82,6 +82,9 @@ VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
 # Gemini AI Pricing Service (for Shopping List ingredient pricing)
 VITE_GEMINI_API_KEY=your_gemini_api_key_here
+
+# Spoonacular API (for Recipe Discovery and meal planning)
+VITE_SPOONACULAR_API_KEY=your_spoonacular_api_key_here
 ```
 
 #### Getting Your Gemini API Key
@@ -91,6 +94,9 @@ VITE_GEMINI_API_KEY=your_gemini_api_key_here
 4. The Gemini API has a free tier - no credit card required
 
 **Note**: The app will work without a Gemini API key, but ingredient pricing on the Shopping List will use fallback hardcoded prices instead of AI-generated estimates.
+
+#### Spoonacular API Key
+Add your Spoonacular API key to the `.env` file. **Important**: The Spoonacular API has daily request limits depending on your plan. If you exceed the limit, the recipe search will not work until the next day. Rotate between API keys when limits are reached.
 
 ## 🚀 Running the Application
 
